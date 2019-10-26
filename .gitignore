@@ -1,0 +1,11 @@
+# 忽略所有
+*
+
+#保留
+!templates/
+!statics/
+!.gitignore
+!*.html
+!*.py
+!*.sql
+
