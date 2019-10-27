@@ -10,10 +10,12 @@ from sqlalchemy.dialects.mssql import  \
     NCHAR, NTEXT, NUMERIC, NVARCHAR, REAL, SMALLDATETIME, \
     SMALLINT, SMALLMONEY, SQL_VARIANT, TEXT, TIME, \
     TIMESTAMP, TINYINT, UNIQUEIDENTIFIER, VARBINARY, VARCHAR
-from sqlalchemy import CheckConstraint,ForeignKey
+from sqlalchemy import CheckConstraint,ForeignKey,PrimaryKeyConstraint
 import os
+from sql_for_lab import *
 # import pandas as pd
 from form import *
+import time
 app = Flask(__name__)
 # app.run(debug=True)
 manager = Manager(app)
@@ -103,8 +105,7 @@ class Software(db.Model):
     id = db.Column(CHAR(16),primary_key=True)
     sName = db.Column(NVARCHAR(None),nullable=False)
     version = db.Column(NVARCHAR(8),nullable=True)
-    sysType = db.Column(CHAR(16), CheckConstraint("sysType='win7' or sysType='ubuntu16.04' or sysType = 'centos7'"),nullable=False,default='win7') # win7 ubuntu16.04 centos 7
-
+    sysType = db.Column(CHAR(16),nullable=False) # win7 ubuntu16.04 centos 7
     aId = db.Column(CHAR(16),ForeignKey('Adminitrator.id'),nullable=False)
 
     def __repr__(self):
@@ -115,6 +116,7 @@ class Laboratory(db.Model):
     id = db.Column(CHAR(16),primary_key=True)
     lName = db.Column(NVARCHAR(32),nullable=False)
     aId = db.Column(CHAR(16),ForeignKey('Adminitrator.id'),nullable=False)
+    cCount = db.Column(INTEGER,nullable=False)
 
     def __repr__(self):
         return '<Laboratory %r>'%self.lName
@@ -122,8 +124,8 @@ class Laboratory(db.Model):
 class Computer(db.Model):
     __tablename__='Computer'
     id = db.Column(CHAR(16),primary_key=True)
-    cName = db.Column(CHAR(16),nullable=False)
-    producer = db.Column(VARCHAR(16),nullable=False)
+    cName = db.Column(NVARCHAR(16),nullable=False)
+    producer = db.Column(NVARCHAR(16),nullable=False)
     aId = db.Column(CHAR(16),ForeignKey('Adminitrator.id'),nullable=False) # 入库管理员
     lId = db.Column(CHAR(16),ForeignKey('Laboratory.id')) # 所在lab编号
     normal = db.Column(BIT,nullable=False,default=1) # 正常与否
@@ -164,14 +166,23 @@ class Demand(db.Model):
     def __repr__(self):
         return '<Demand %r>' %self.id
 
+class ComputerSys(db.Model):
+    __tablename__='ComputerSys'
+    __table_args__ = (
+        PrimaryKeyConstraint('cId', 'sys'),
+    )
+    cId = db.Column(CHAR(16),ForeignKey('Computer.id'),nullable=False)
+    sys = db.Column(CHAR(16),nullable=False)
+    def __repr__(self):
+        return '<ComputerSys computer_%r,system_%r>' %(self.cId,self.sys)
 # web
 @login_manager.user_loader
-def load_admin(admin_id):
-    return Adminitrator.query.get(int(admin_id))
+def load_admin(id):
+    if session['role']=='admin':
+        return Adminitrator.query.get(str(id))
+    elif session['role']=='teacher':
+        return Teacher.query.get(str(id))
 
-@login_manager.user_loader
-def load_teacher(teacher_id):
-    return Teacher.query.get(int(teacher_id))
 
 @app.route('/',methods=['GET','POST'])
 def login():
@@ -183,7 +194,7 @@ def login():
                 flash('账号或密码错误！')
                 return redirect(url_for('login'))
             else:
-                login_user(user)
+                status = login_user(user)
                 session['id'] = user.id
                 session['name'] = user.aName
                 session['role'] = 'admin'
@@ -202,7 +213,7 @@ def login():
                 session['name'] = user.tName
                 session['role'] = 'teacher'
                 return redirect(url_for('teacher_view'))
-            pass
+            
     return render_template('login.html', form=form)
 
 # 本系统没有注册系统，但是有增加教师用户的功能
@@ -230,10 +241,31 @@ def login():
 #     if(len(err_df)>0):
 #         err_df.to_csv('importComputerErr.csv')
 #     return len(df)-len(err_df),len(err_df) # 成功数，失败数
-# # TODO 计算机录入界面设计
+# # T
+
+@app.route('/admin')
+@login_required
+def admin_view():
+    # TODO 管理员视图
+    return render_template('admin-index.html',name=session.get('name'),role=session['role'])
+    
+
+@app.route('/teacher')
+@login_required
+def teacher_view():
+    # TODO 老师视图
+    return render_template('teacher-index.html',name=session.get('name'),role=session['role'])
+    pass
 
 
-# TODO 实验室增加
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash('您已经登出！')
+    return redirect(url_for('login'))
+
 @app.route('/new_lab', methods=['GET', 'POST'])
 @login_required
 def newLab():
@@ -241,21 +273,137 @@ def newLab():
     if form.validate_on_submit():
         exist = Laboratory.query.filter_by(id=request.form.get('labId')).first()
         if exist is not None:
-            flash(u'该实验室已经存在,请重新填写')
+            flash(u'该实验室编号已经存在,请重新填写')
         else:
             try:
                 lab = Laboratory()
                 lab.id = request.form.get('labId')
-                book.book_name = request.form.get('lName')
+                lab.lName = request.form.get('labName')
+                lab.aId = current_user.id
+                lab.cCount = int(request.form.get('labcCount'))
                 db.session.add(lab)
-                db.session.commit()
                 flash(u'实验室信息添加成功！')
-            except:
+                db.session.commit()
+            except :
+                db.session.rollback()
                 flash(u'实验室信息添加失败:(')
+                
             finally:
                 return redirect(url_for('newLab'))
-    return render_template('new-lab.html', name=session.get('name'), form=form)    
-# TODO 软件录入
+    return render_template('new-lab.html', name=session.get('name'),role=session['role'], form=form)    
+
+@app.route('/delete_lab', methods=['GET', 'POST'])
+@login_required
+def deleteLab():
+    form = deleteLabForm()
+    flash(u'注意:该实验室电脑将被设置为闲置')
+    if form.validate_on_submit():
+        exist = Laboratory.query.filter_by(id=request.form.get('labId')).first()
+        if exist is None:
+            flash(u'该实验室编号不存在,请重新填写')
+        else:
+            try:
+                # 移除电脑
+                db.session.execute(remove_computer_from(exist.id.strip()))
+                db.session.commit()
+                db.session.delete(exist)
+                flash(u'实验室信息删除成功！')
+                db.session.commit()
+            except :
+                db.session.rollback()
+                flash(u'实验室信息添加失败:(')
+                
+            finally:
+                return redirect(url_for('deleteLab'))
+    return render_template('delete-lab.html', name=session.get('name'),role=session['role'], form=form)    
+
+# TODO 查找已有实验室
+
+@app.route('/new_software',methods = ['GET','POST'])
+@login_required
+def newSoftware():
+    form = newSoftwareForm()
+    if form.validate_on_submit():
+        exist = Software.query.filter_by(sName=request.form.get('sName'),version=request.form.get('sVersion')).first() #根据版本和名字确定
+        if exist is not None:
+            flash(u'该版本软件已经存在,请重新填写')
+        else:
+            try:
+                # 获取id
+                result = db.session.execute(count_software)
+                count = result.fetchall()[0][0]+1
+                sId = f's{time.strftime("%Y%m%d",time.localtime())}/{count}'
+                software = Software()
+                software.id = sId
+                software.aId=current_user.id
+                software.sysType = request.form.get('sSysType')
+                software.sName = request.form.get('sName')
+                software.version = request.form.get('sVersion')
+                db.session.add(software)
+                flash(u'软件信息添加成功！')
+                db.session.commit()
+            except:
+                db.session.rollback()
+                flash(u'软件添加失败:(')
+                
+            finally:
+                return redirect(url_for('newSoftware'))
+    return render_template('new-software.html', name=session.get('name'),role=session['role'], form=form)    
+
+
+@app.route('/new_computer',methods = ['GET','POST'])
+@login_required
+def newComputer():
+    form = newComputerForm()
+    if form.validate_on_submit():
+        try:
+            # 获取id
+            result = db.session.execute(count_computer)
+            count = result.fetchall()[0][0]+1
+            cId = f's{time.strftime("%Y%m%d",time.localtime())}/{count}'
+            flash(u'新电脑编号:'+cId)
+            computer = Computer()
+            computer.id = cId
+            computer.aId=current_user.id
+            computer.cName = request.form.get('cName')
+            computer.producer = request.form.get('cProducer')
+            db.session.add(computer)
+            flash(u'软件信息添加成功！')
+            db.session.commit()
+        except:
+            db.session.rollback()
+            flash(u'软件添加失败:(')
+            
+        finally:
+            return redirect(url_for('newComputer'))
+    return render_template('new-computer.html', name=session.get('name'),role=session['role'], form=form)    
+    
+
+# TODO 实验室配置
+@app.route('/lab<id>_Set',methods=['GET','POST'])
+@login_required
+def labSet(id):
+    form=labSetForm()
+    # 设置
+    if request.form['setType'] == 'software':
+        # TODO 查找本实验室安装该软件的电脑
+        pass
+    elif request.form['setType'] == 'computer':
+        # TODO 查找本实验室安装了改系统的电脑
+        pass
+
+    if form.validate_on_submit():
+        if form.method.data == "software":
+            # TODO 修改对应的数据
+            pass
+        elif form.method.data == "computer":
+            # TODO 增加系统
+            pass
+    # lab-set.html
+    pass
+
+
+# TODO 计算机录入界面设计
 # TODO 软件安装
 # TODO 需求解决
 # TODO 计算机资源查找

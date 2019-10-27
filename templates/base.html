@@ -38,6 +38,7 @@
           {{ name }}
         </a>
         <!-- TODO 信息查看 -->
+        {%block headNav%} {%endblock%}
         {#
             <dl class="layui-nav-child">
               <dd><a href="{{ url_for('user_info', id = {{role}}) }}">个人信息</a></dd>
@@ -79,10 +80,11 @@
 
   <div class="layui-body">
     <!-- 内容主体区域 -->
+    <!-- TODOflash优化显示 -->
     <div class="layui-card layui-row layui-col-space10" style="margin:15px 10px;width:100%;">
-        {% for message in get_flashed_messages() %}
-        <div class="alert alert-warning">
-            <button type="button" class="close" data-dismiss="alert">&times;</button>
+      {% for message in get_flashed_messages() %}
+      <div class="alert alert-warning">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
                 {{ message }}
         </div>
         {% endfor %}

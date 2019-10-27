@@ -1,0 +1,101 @@
+{%extends admin-index.html%}
+{%block title%}实验室设置{%endblock%}
+{%block body%}
+<div id = "select">
+    <form class="layui-form" method="post">
+    {{form.csrf_token}}
+        <div class = "layui-form-item">
+            <div class='layui-inline'>
+                <div class="layui-row layui-col-space10">
+                    {{form.method(class="layui-input-inline".id="setType")}}
+                </div>
+                <div class="layui-col-md6" id="removeSet"">
+                    <!-- TODO 需要js配合后端 -->
+                    <!-- 默认显示软件 -->
+                    <label class="lay-ui-label">软件名:</label>
+                    <div class="layui-input-inline">
+                        {{ form.sName(class="layui-input",style="width:250px") }}
+                    </div>
+                    
+                    <label class="lay-ui-label">版本:</label>
+                    <div class="layui-input-inline">
+                        {{ form.sVersion(class="layui-input",style="width:250px") }}
+                    </div>
+                    
+                    <label class="lay-ui-label">系统要求:</label>
+                    <div class="layui-input-inline">
+                        {{ form.sSysType(class="layui-input",style="width:250px") }}
+                    </div>
+                </div>
+                <div class="layui-col-md2">
+                    <div class="layui-input-inline">{{ form.submit(class="layui-btn",id="comfirm") }}</div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+<script>
+    $(document).ready(function(){
+        $('#setType').on('change',function(){
+            if ($("#setType").val() === "software"){
+                $("#removeSet").empty();
+                $softSet = $('<label class="lay-ui-label">软件名:</label> \
+                <div class="layui-input-inline"> \
+                    {{ form.sName(class="layui-input",style="width:250px") }} \
+                </div> \
+                <label class="lay-ui-label">版本:</label> \
+                <div class="layui-input-inline"> \
+                    {{ form.sVersion(class="layui-input",style="width:250px") }} \
+                </div> \
+                <label class="lay-ui-label">系统要求:</label> \
+                <div class="layui-input-inline"> \
+                    {{ form.sSysType(class="layui-input",style="width:250px") }} \
+                </div>')
+                $("#removeSet").append($softSet);
+            }
+            else if ($("#setType").val() === "computer"){
+                $("#removeSet").empty();
+                $computerSet = $('<label class="lay-ui-label">电脑名:</label> \
+                <div class="layui-input-inline"> \
+                    {{ form.cName(class="layui-input",style="width:250px") }} \
+                </div> \
+                <label class="lay-ui-label">系统:</label> \
+                <div class="layui-input-inline"> \
+                    {{ form.cSys(class="layui-input",style="width:250px") }} \
+                </div>')
+                $("#removeSet").append($computerSet);
+            }
+            $.post(
+                "{{url_for('labSet',id=session['labId']) }}",
+                {
+                    setType:$("#setType").val()
+                }
+            )
+        })
+      
+
+    })
+</script>
+
+</div>
+<div id="result" style="width: 900px;height:470px;">
+<table class="layui-hide" lay-filter="Re" style="width: 900px;height:235px;">
+    <thead>
+        <tr>
+            <th lay-data="{field:'notNeedChange', width:250}">本实验室未拥有此软件的电脑</th>
+          </tr>        
+    </thead>
+</table>
+<table class="layui-hide" id="resultNotNeedChange" lay-filter="re" style="width: 900px;height:235px;">
+    <thead>
+        <tr>
+            <th lay-data="{field:'notNeedChange', width:250}">本实验室拥有此软件的电脑</th>
+          </tr>        
+    </thead>
+</table>
+
+</div>
+{%endblock%}
+{%block script %}
+
+{%endblock%}

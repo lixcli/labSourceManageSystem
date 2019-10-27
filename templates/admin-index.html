@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}首页{% endblock %}
+
+{% block nav %}
+{{ super() }}
+<li class="layui-nav-item">
+    <a class="" href="javascript:;">实验室管理</a>
+    <dl class="layui-nav-child">
+        <dd><a href="{{url_for('newLab')}}">新实验室登记</a></dd>
+    </dl>
+    <dl class="layui-nav-child">
+        <dd><a href="{{url_for('deleteLab')}}">实验室注销</a></dd>
+    </dl>
+</li>
+<li class="layui-nav-item">
+    <a class="" href="javascript:;">软件管理</a>
+    <dl class="layui-nav-child">
+        <dd><a href="{{url_for('newSoftware')}}">软件入库</a></dd>
+    </dl>
+</li>
+<li class="layui-nav-item">
+    <a class="" href="javascript:;">电脑管理</a>
+    <dl class="layui-nav-child">
+        <dd><a href="{{url_for('newComputer')}}">电脑入库</a></dd>
+    </dl>
+</li>
+<!-- TODO 管理员软件需求视图 -->
+{#
+<li class="layui-nav-item">
+    <a class="" href="javascript:;">软件设置</a>
+    <!-- TODO 软件增删改统 -->
+</li>
+<li class="layui-nav-item">
+    <a href="javascript:;">需求查看</a>
+    <dl class="lay-ui-child">
+        <dd><a href="{{url_for('demandOpen')}}">未解决需求</a></dd>
+        <dd><a href="{{url_for('demandClosed')}}">已解决需求</a></dd>
+    </dl>
+</li>
+#}
+{% endblock %}
+{% block body %}
+<div id="main" style="width: 900px;height:470px;"></div>
+<!-- TODO 显示个人信息 -->
+{% endblock %}
+{% block script %}
+
+{% endblock %}

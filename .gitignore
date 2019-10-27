@@ -3,7 +3,8 @@
 
 #保留
 !templates/
-!statics/
+!static/
+!static/**/*
 !.gitignore
 !*.html
 !*.py
