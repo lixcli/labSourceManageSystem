@@ -8,7 +8,7 @@ ORDER BY cName
 
 # 查找已有软件
 exist_software = f'''
-SELECT sName,version,sysType FROM SoftWare
+SELECT * FROM SoftWare
 '''
 # 统计已有软件(计算当天已有的软件数)
 count_software = f'''
@@ -32,6 +32,11 @@ WHERE lId={tgt}
 # 查找已有计算机种类
 exist_lab = f'''
 SELECT DISTINCT cName FROM Computer
+'''
+# 删除软件,可多条记录tgt为类似'xiaoming','daming'的字符串
+delete_software=lambda tgt: f'''
+DELETE FROM Software
+WHERE id = {tgt}
 '''
 
 

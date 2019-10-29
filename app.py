@@ -16,6 +16,7 @@ from sql_for_lab import *
 # import pandas as pd
 from form import *
 import time
+import json
 app = Flask(__name__)
 # app.run(debug=True)
 manager = Manager(app)
@@ -350,6 +351,24 @@ def newSoftware():
                 return redirect(url_for('newSoftware'))
     return render_template('new-software.html', name=session.get('name'),role=session['role'], form=form)    
 
+@app.route('/check_softwares',methods=['GET','POST'])
+@login_required
+def check_softwares():
+
+    softwares=db.session.execute(exist_software)
+    softwares = softwares.fetchall()
+    data=[]
+    for software in softwares:
+        item={'id':software[0],
+                    'sName':software[1],
+                    'version':software[2],
+                    'sysType':software[3],
+                    'aId':software[4]}
+        data.append(item)
+    table_result = {"code": 0, "msg": None, "count": len(data), "data": data}
+    return jsonify(table_result)
+    
+    
 
 @app.route('/new_computer',methods = ['GET','POST'])
 @login_required
@@ -378,7 +397,19 @@ def newComputer():
             return redirect(url_for('newComputer'))
     return render_template('new-computer.html', name=session.get('name'),role=session['role'], form=form)    
     
+@app.route('/delete_softwares',methods=['POST'])
+def delete_check_softwares():
+    del_ids = json.loads(request.form.get('ids'))
 
+    try:
+        for id in del_ids:
+            db.session.execute(delete_software(repr(id)))
+        db.session.commit()
+        return 'success',200
+    except:
+        db.session.rollback()
+        return 'fail',403
+    
 # TODO 实验室配置
 @app.route('/lab<id>_Set',methods=['GET','POST'])
 @login_required
@@ -402,6 +433,7 @@ def labSet(id):
     # lab-set.html
     pass
 
+    
 
 # TODO 计算机录入界面设计
 # TODO 软件安装

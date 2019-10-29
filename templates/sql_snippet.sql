@@ -4,9 +4,10 @@ USE DB_laboratory
 
 -- 查询指定表中的所有字段名和字段类型
 -- select sc.name,st.name from syscolumns sc,systypes st where sc.xtype=st.xtype and sc.id in(select id from sysobjects where xtype='U' and name='Software');
-
+DELETE FROM Software
+WHERE id in ('s20191027/0')
 -- 查看指定表
-SELECT * FROM Laboratory
+SELECT * FROM Software
 
 -- 插入指定表
 -- INSERT INTO Adminitrator
