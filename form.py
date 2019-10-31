@@ -39,16 +39,11 @@ class newComputerForm(FlaskForm):
     submit = SubmitField(u'提交')
 
 class labSetForm(FlaskForm):
-    methods = [('software','软件'),('computer','电脑')]
+    methods = [('sName','软件名'),('sId','软件编号')]
     method = SelectField(choices=methods,validators=[DataRequired()],coerce=str)
-    sName = StringField()
-    sVersion = StringField()
-    sSysType = StringField()
-
-    # cProducer = StringField()
-    cName = StringField()
-    cSys = StringField()
-    submit = SubmitField(u'确认')
+    content = StringField(validators=[DataRequired()])
+    labId = StringField(u'实验室号',validators=[DataRequired()])
+    # submit = SubmitField(u'查看')
 
 class EditInfoForm(FlaskForm):
     name = StringField(u'用户名', validators=[Length(1, 32)])

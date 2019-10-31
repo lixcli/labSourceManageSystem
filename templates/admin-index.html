@@ -11,6 +11,13 @@
     <dl class="layui-nav-child">
         <dd><a href="{{url_for('deleteLab')}}">实验室注销</a></dd>
     </dl>
+    <dl class="layui-nav-child">
+        <dd><a href="{{url_for('labSet')}}">实验室软件配置</a></dd>
+    </dl>
+    <dl class="layui-nav-child">
+        <dd><a href="{{url_for('labComputer')}}">实验室电脑配置</a></dd>
+    </dl>
+
 </li>
 <li class="layui-nav-item">
     <a class="" href="javascript:;">软件管理</a>
@@ -40,13 +47,29 @@
 #}
 {% endblock %}
 {% block body %}
-<div id="main" style="width: 900px;height:235px;">
-    <table class="layui-hide" id="sTest" lay-filter="sTest"></table>
+
+<!-- 设置折叠表格 -->
+<div class="layui-collapse">
+    <div class="layui-colla-item">
+      <h2 class="layui-colla-title">软件数据表</h2>
+      <div class="layui-colla-content layui-show">
+        <table class="layui-hide" id="sTest" lay-filter="sTest"></table>
+      </div>
+    </div>
+    <div class="layui-colla-item">
+      <h2 class="layui-colla-title">实验室数据表</h2>
+      <div class="layui-colla-content layui-show">
+        <table class="layui-hide" id="lTest" lay-filter="lTest"></table>
+      </div>
+    </div>
 </div>
-<div id="main" style="width: 900px;height:235px;">
-    <table class="layui-hide" id="labs"></table>
+<!-- <div id="main" style="width: 900px;height:235px;"> -->
+    <!-- <table class="layui-hide" id="sTest" lay-filter="sTest"></table> -->
+<!-- </div> -->
+<!-- <div id="main" style="width: 900px;height:235px;"> -->
+    <!-- <table class="layui-hide" id="lTest" lay-filter="lTest"></table> -->
     <!-- TODO 实验室数据 -->
-</div>
+<!-- </div> -->
 <!-- TODO 显示个人信息 -->
 {% endblock %}
 {% block script %}
@@ -83,6 +106,7 @@
           ,{fixed: 'right', title:'操作', toolbar: '#bar', width:150}
         ]]
         ,page: true
+        ,limit: 7
         ,response: {
             statusCode: 0 //重新规定成功的状态码为 200，table 组件默认为 0
           }
@@ -159,7 +183,7 @@
         if(obj.event === 'del'){
           layer.confirm('该数据将从数据库删除', function(index){
             var _list=[];
-            _list.push($.trim(data[i].id));
+            _list.push($.trim(data.id));
             obj.del();
             var data_id = {
                 ids:JSON.stringify(_list)
@@ -188,6 +212,131 @@
           });
         }
       });
+    
+      
+      table.render({
+        elem: '#lTest'
+        ,url:'{{ url_for("check_labs") }}'
+        ,toolbar: '#toolbar' //开启头部工具栏，并为其绑定左侧模板
+        ,title: '实验室数据表'
+        
+        ,cols: [[
+          {type: 'checkbox', fixed: 'left'}
+          ,{field:'id', title:'实验室号', width:150, fixed: 'left', unresize: true, sort: true}
+          ,{field:'lName', title:'实验室名', width:120}
+          ,{field:'count', title:'实验室电脑数', width:120}
+          ,{field:'aId', title:'入库操作员', width:180}
+          ,{fixed: 'right', title:'操作', toolbar: '#bar', width:150}
+        ]]
+        ,page: true
+        ,limit: 7
+        ,response: {
+            statusCode: 0 //重新规定成功的状态码为 200，table 组件默认为 0
+          }
+        ,parseData: function(res){ //res 即为原始返回的数据
+            console.log(res);
+            return {
+              "code": res.code, //解析接口状态
+              "msg": res.msg, //解析提示文本
+              "count": res.count, //解析数据长度
+              "data": res.data //解析数据列表
+            };
+          }
+
+      });
+      
+      //头工具栏事件
+      table.on('toolbar(lTest)', function(obj){
+        var checkStatus = table.checkStatus(obj.config.id);
+        switch(obj.event){
+          case 'getCheckData':
+            var data = checkStatus.data;
+            var _list=[];
+            layer.confirm(
+                '此操作将删除数据库中对应的数据'
+                ,{
+                    time:20000
+                },
+                (index)=>{
+                    var _list= [];
+                    for(var i=0;i<data.length;i++)
+                    {
+                        _list.push($.trim(data[i].id));
+                    }
+
+                    var data_id = {
+                        ids:JSON.stringify(_list)
+                    };
+                    $.ajax({
+                        type:'post',
+                        async:true,
+                        url:"{{url_for('delete_check_labs')}}",
+                        data:data_id,
+                        success:function (result) {
+                            table.reload('sTest');
+                            layer.msg('已删除'
+                            ,{
+                                time:1000
+                            });
+  
+                        },
+                        error: function(){
+                            layer.msg('删除失败'
+                            ,{
+                                time:1000
+                            })}
+                        
+                    });
+                    layer.close();
+                    }
+
+            )
+    
+          break;
+                    //后面再加功能
+        };
+      });
+      
+      //监听行工具事件
+      table.on('tool(lTest)', function(obj){
+        var data = obj.data;
+        //console.log(obj)
+    
+
+        if(obj.event === 'del'){
+          layer.confirm('该数据将从数据库删除', function(index){
+            var _list=[];
+            _list.push($.trim(data.id));
+            obj.del();
+            var data_id = {
+                ids:JSON.stringify(_list)
+            };
+            $.ajax({
+                type:'post',
+                async:true,
+                url:"{{url_for('delete_check_labs')}}",
+                data:data_id,
+                success:function (result) {
+                    layer.msg('已删除'
+                    ,{
+                        time:1000
+                    });
+                    
+                },
+                error: function(){
+                    layer.msg('删除失败'
+                    ,{
+                        time:1000
+                    });
+                }
+            });
+
+            layer.close(index);
+          });
+        }
+      });
+    
+      
     });
     </script>
 {% endblock %}

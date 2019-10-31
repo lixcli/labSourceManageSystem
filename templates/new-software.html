@@ -55,7 +55,7 @@
     });
     $(document).ready(function(){
         $("#computerSet").on('click',function () {
-            window.location.href="{{ url_for('labSet',id=session['labId']) }}";
+            window.location.href="{{ url_for('labSet') }}";
         })
     });
 

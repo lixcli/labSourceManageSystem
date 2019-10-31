@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}首页{% endblock %}
+
+{% block nav %}
+{{ super() }}
+
+<!-- TODO 管理员软件需求视图 -->
+
+{#
+<li class="layui-nav-item">
+    <a href="javascript:;">需求查看</a>
+    <dl class="lay-ui-child">
+        <dd><a href="{{url_for('demandOpen')}}">未解决需求</a></dd>
+        <dd><a href="{{url_for('demandClosed')}}">已解决需求</a></dd>
+    </dl>
+</li>#}
+{% endblock %}
+{% block body %}
+
+<!-- 设置折叠表格 -->
+<div class="layui-collapse">
+    <div class="layui-colla-item">
+      <h2 class="layui-colla-title">软件数据表</h2>
+      <div class="layui-colla-content layui-show">
+        <table class="layui-hide" id="sTest" lay-filter="sTest"></table>
+      </div>
+    </div>
+    <div class="layui-colla-item">
+      <h2 class="layui-colla-title">实验室数据表</h2>
+      <div class="layui-colla-content layui-show">
+        <table class="layui-hide" id="lTest" lay-filter="lTest"></table>
+      </div>
+    </div>
+</div>
+<!-- <div id="main" style="width: 900px;height:235px;"> -->
+    <!-- <table class="layui-hide" id="sTest" lay-filter="sTest"></table> -->
+<!-- </div> -->
+<!-- <div id="main" style="width: 900px;height:235px;"> -->
+    <!-- <table class="layui-hide" id="lTest" lay-filter="lTest"></table> -->
+    <!-- TODO 实验室数据 -->
+<!-- </div> -->
+<!-- TODO 显示个人信息 -->
+{% endblock %}
+{% block script %}
+<script type="text/html" id="toolbar">
+    <div class="layui-btn-container">
+      <button class="layui-btn layui-btn-sm" lay-event="getCheckData">删除选中行数据</button>
+      <!-- <button class="layui-btn layui-btn-sm" lay-event="getCheckLength">获取选中数目</button> -->
+      <!-- <button class="layui-btn layui-btn-sm" lay-event="isAll">验证是否全选</button> -->
+    <!-- TODO 全选操作 -->
+  </div>
+</script>
+<script type="text/html" id="bar">
+<!-- <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a> -->
+<a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>
+            
+<script>
+    layui.use('table', function(){
+      var table = layui.table;
+      
+      table.render({
+        elem: '#sTest'
+        ,url:'{{ url_for("check_softwares") }}'
+        ,toolbar: '#toolbar' //开启头部工具栏，并为其绑定左侧模板
+        ,title: '软件数据表'
+        
+        ,cols: [[
+          {field:'id', title:'软件id', width:150, fixed: 'left', unresize: true, sort: true}
+          ,{field:'sName', title:'软件名', width:120}
+          ,{field:'version', title:'版本', width:120}
+          ,{field:'sysType', title:'系统要求', width:150}
+          ,{field:'aId', title:'入库管理员', width:150}
+
+        ]]
+        ,page: true
+        ,limit: 7
+        ,response: {
+            statusCode: 0 //重新规定成功的状态码为 200，table 组件默认为 0
+          }
+        ,parseData: function(res){ //res 即为原始返回的数据
+            console.log(res);
+            return {
+              "code": res.code, //解析接口状态
+              "msg": res.msg, //解析提示文本
+              "count": res.count, //解析数据长度
+              "data": res.data //解析数据列表
+            };
+          }
+
+      });
+      
+      
+      table.render({
+        elem: '#lTest'
+        ,url:'{{ url_for("check_labs") }}'
+        ,toolbar: '#toolbar' //开启头部工具栏，并为其绑定左侧模板
+        ,title: '实验室数据表'
+        
+        ,cols: [[
+          {field:'id', title:'实验室号', width:150, fixed: 'left', unresize: true, sort: true}
+          ,{field:'lName', title:'实验室名', width:120}
+          ,{field:'count', title:'实验室电脑数', width:120}
+          ,{field:'aId', title:'入库操作员', width:180}
+
+        ]]
+        ,page: true
+        ,limit: 7
+        ,response: {
+            statusCode: 0 //重新规定成功的状态码为 200，table 组件默认为 0
+          }
+        ,parseData: function(res){ //res 即为原始返回的数据
+            console.log(res);
+            return {
+              "code": res.code, //解析接口状态
+              "msg": res.msg, //解析提示文本
+              "count": res.count, //解析数据长度
+              "data": res.data //解析数据列表
+            };
+          }
+
+      });
+      
+    });
+    </script>
+{% endblock %}

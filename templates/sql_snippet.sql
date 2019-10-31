@@ -4,14 +4,18 @@ USE DB_laboratory
 
 -- 查询指定表中的所有字段名和字段类型
 -- select sc.name,st.name from syscolumns sc,systypes st where sc.xtype=st.xtype and sc.id in(select id from sysobjects where xtype='U' and name='Software');
-DELETE FROM Software
-WHERE id in ('s20191027/0')
+-- DELETE FROM Software
+-- WHERE id in ('s20191027/0')
 -- 查看指定表
-SELECT * FROM Software
+-- SELECT * FROM InstallList
+-- DELETE FROM InstallList
+-- WHERE id LIKE '%'
 
+-- SELECT max(CONVERT(INT,SUBSTRING(id,11,21))) FROM InstallList WHERE id LIKE 'i'+(CONVERT(varchar(8),GETDATE(),112))+'/%'
 -- 插入指定表
--- INSERT INTO Adminitrator
--- VALUES('22920172204148','pbkdf2:sha256:150000$qImwjNTC$efc8b17a0ec47f711e8cacc216d6a506e601cf92e741eb8bdbf1ec2618b36e01','lxc')
+-- SELECT * FROM Teacher
+-- INSERT INTO Teacher
+-- VALUES('22920172204148','pbkdf2:sha256:150000$qImwjNTC$efc8b17a0ec47f711e8cacc216d6a506e601cf92e741eb8bdbf1ec2618b36e01','lxc','人工智能系','学生')
 
 -- 插入随机数据
 -- 插入计算机
@@ -39,3 +43,21 @@ SELECT * FROM Software
 -- 数组
 -- create type stringArray as NVARCHAR(16) array[100] 
 -- SELECT COUNT(*) FROM SoftWare WHERE id LIKE 's'+(CONVERT(varchar(8),GETDATE(),112))+'%'
+-- SELECT COUNT(id) FROM Computer WHERE id LIKE 'c'+(CONVERT(varchar(8),GETDATE(),112))+'%'
+-- DELETE FROM Computer
+-- WHERE id LIKE 's%'
+-- SELECT MAX(id) FROM InstallList
+-- WHERE id LIKE 'i'+(CONVERT(varchar(8),GETDATE(),112))+'/%'
+-- SELECT * FROM Computer
+-- SELECT id,cName,producer,aId From Computer
+-- WHERE lId='301'
+-- SELECT Computer.id,cName,producer,Computer.aId 
+-- FROM InstallList,Computer
+-- WHERE  Computer.lId = '301'
+-- AND Computer.id = InstallList.cId AND sId IN ('s20191030/1')
+
+-- SELECT Computer.id,cName,producer,Computer.aId 
+-- FROM InstallList,Computer
+-- WHERE sId IN ('s20191030/1')  AND Computer.lId = '301'
+-- AND Computer.id = InstallList.cId
+SELECT max(CONVERT(INT,SUBSTRING(id,11,21))) FROM InstallList WHERE id LIKE 'i'+(CONVERT(varchar(8),GETDATE(),112))+'/%'
