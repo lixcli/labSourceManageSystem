@@ -60,4 +60,10 @@ USE DB_laboratory
 -- FROM InstallList,Computer
 -- WHERE sId IN ('s20191030/1')  AND Computer.lId = '301'
 -- AND Computer.id = InstallList.cId
-SELECT max(CONVERT(INT,SUBSTRING(id,11,21))) FROM InstallList WHERE id LIKE 'i'+(CONVERT(varchar(8),GETDATE(),112))+'/%'
+-- SELECT max(CONVERT(INT,SUBSTRING(id,11,21))) FROM InstallList WHERE id LIKE 'i'+(CONVERT(varchar(8),GETDATE(),112))+'/%'
+-- SELECT * FROM Demand
+
+-- SELECT * FROM Demand
+-- WHERE tId='22920172204148' AND closeDate IS  NULL
+
+SELECT * FROM Adminitrator

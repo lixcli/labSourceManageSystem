@@ -38,14 +38,12 @@
           {{ name }}
         </a>
         <!-- TODO 信息查看 -->
-        {%block headNav%} {%endblock%}
-        {#
             <dl class="layui-nav-child">
-              <dd><a href="{{ url_for('user_info', id = {{role}}) }}">个人信息</a></dd>
+             
               <dd><a href="{{ url_for('change_password') }}">修改密码</a></dd>
             <!-- TODO 修改密码 -->
             </dl>
-            #}
+
       </li>
       <li class="layui-nav-item"><a href="{{ url_for('logout') }}">退出登录</a></li>
     </ul>

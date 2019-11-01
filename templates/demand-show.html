@@ -1,0 +1,280 @@
+{%extends "teacher-index.html" %}
+{%block title%}需求浏览{%endblock%}
+<!-- 显示个人已经解决的需求 -->
+<!-- 显示个人未解决需求 -->
+<!-- 可删除个人的需求 -->
+{% block nav %}
+{{super()}}
+
+{% endblock%}
+
+{%block body%}
+<div class="layui-collapse layui-show" id="udemand">
+    <div class="layui-colla-item">
+        <h2 class="layui-colla-title">未解决需求</h2>
+        <div class="layui-colla-content layui-show">
+        <table  id="ucTest" lay-filter="ucTest"></table>
+        </div>
+    </div>
+</div>
+<div class="layui-collapse layui-show" id="hdemand">
+    <div class="layui-colla-item">
+        <h2 class="layui-colla-title">已解决需求</h2>
+        <div class="layui-colla-content layui-show">
+        <table id="hcTest" lay-filter="hcTest"></table>
+        </div>
+    </div>
+</div>
+{%endblock%}
+
+{%block script%}
+<script type="text/html" id="outbar">
+    <!-- <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a> -->
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+    </script>
+    <script type="text/html" id="toolbar">
+        <div class="layui-btn-container">
+          <button class="layui-btn layui-btn-sm" lay-event="getCheckData">选中行数据</button>
+          <!-- <button class="layui-btn layui-btn-sm" lay-event="getCheckLength">获取选中数目</button> -->
+          <!-- <button class="layui-btn layui-btn-sm" lay-event="isAll">验证是否全选</button> -->
+      </div>
+    </script>
+
+    <script>
+        $(document).ready(function(){
+            layui.use('table',function(){
+                var table = layui.table;
+                table.render({
+                    elem:'#ucTest',
+                    url:'{{url_for("open_tDemand")}}',
+                    toolbar:'#toolbar',
+                    title:'未解决需求',
+                    where:{
+                        case:'open'
+                    },
+                    cols:[[
+                        {type: 'checkbox', fixed: 'left'}
+                        ,{field:'id', title:'id', width:150, fixed: 'left', unresize: true, sort: true}
+                        ,{field:'lId', title:'实验室号', width:120}
+                        ,{field:'status', title:'状态', width:120}
+                        ,{field:'content',title:'内容',width:120}
+                        ,{fixed: 'right', title:'删除', toolbar: '#outbar', width:150}                            
+                    ]]
+                    ,page: true
+                    ,limit: 7
+                    ,response: {
+                        statusCode: 0 //重新规定成功的状态码为 200，table 组件默认为 0
+                      }
+                    ,parseData: function(res){ //res 即为原始返回的数据
+                        return {
+                          "code": res.code, //解析接口状态
+                          "msg": res.msg, //解析提示文本
+                          "count": res.count, //解析数据长度
+                          "data": res.data //解析数据列表
+                        };
+                      }                    
+                })
+            
+                table.render({
+                    elem:'#hcTest',
+                    url:'{{url_for("close_tDemand")}}',
+                    toolbar:'#toolbar',
+                    title:'已解决需求',
+                    where:{
+                        case:'close'
+                    },
+                    cols:[[
+                        {type: 'checkbox', fixed: 'left'}
+                        ,{field:'id', title:'id', width:150, fixed: 'left', unresize: true, sort: true}
+                        ,{field:'lId', title:'实验室号', width:120}
+                        ,{field:'content',title:'内容',width:120}
+                        ,{field:'closeDate',title:'解决日期',width:120}
+                        ,{field:'aId',title:'操作员',width:150}
+                        ,{fixed: 'right', title:'删除', toolbar: '#outbar', width:150}                            
+                    ]]
+                    ,page: true
+                    ,limit: 7
+                    ,response: {
+                        statusCode: 0 //重新规定成功的状态码为 200，table 组件默认为 0
+                      }
+                    ,parseData: function(res){ //res 即为原始返回的数据
+                        return {
+                          "code": res.code, //解析接口状态
+                          "msg": res.msg, //解析提示文本
+                          "count": res.count, //解析数据长度
+                          "data": res.data //解析数据列表
+                        };
+                      }                    
+                })
+            
+
+                
+
+                    table.on('toolbar(ucTest)',function(obj){
+                        
+                        var checkStatus = table.checkStatus(obj.config.id);
+                        switch(obj.event){
+                          case 'getCheckData':
+                          var data = checkStatus.data;
+                          layer.confirm('此操作将删除已经提交的需求'
+                          ,function(index){
+                            var _list=[];
+                            for(var i=0;i<data.length;i++){
+                                _list.push($.trim(data[i].id));
+                            }
+                            
+                            var data_id = {
+                                Ids:JSON.stringify(_list),                  
+                            };
+                            $.ajax({
+                                type:'post',
+                                async:true,
+                                url:"{{url_for('del_demand')}}",
+                                data:data_id,
+                                success:function (result) {
+                                    table.reload('ucTest');
+
+                                    layer.msg('已成功删除'+result+'条数据'
+                                    ,{
+                                        time:1000
+                                    });
+                                    
+                                },
+                                error: function(){
+                                    layer.msg('删除失败'
+                                    ,{
+                                        time:1000
+                                    });
+                                }
+                            });
+                          });
+                        
+                          break;
+                        }
+                      })
+                    
+                    table.on('tool(ucTest)', function(obj){
+                        var data = obj.data;
+                        //console.log(obj)
+                        if(obj.event === 'del'){
+                          layer.confirm('此操作将删除需求'
+                          ,function(index){
+                            var _list=[];
+                            _list.push($.trim(data.id));
+                            var data_id = {
+                                Ids:JSON.stringify(_list),                
+                            };
+                            $.ajax({
+                                type:'post',
+                                async:true,
+                                url:"{{url_for('del_demand')}}",
+                                data:data_id,
+                                success:function (result) {
+                                    table.reload('ucTest');
+
+                                    layer.msg('已成功删除'+result+'条数据'
+                                    ,{
+                                        time:1000
+                                    });
+                                    
+                                },
+                                error: function(){
+                                    layer.msg('删除失败'
+                                    ,{
+                                        time:1000
+                                    });
+                                }
+                            });
+                          });
+                        
+                        }
+                      });
+                            
+
+
+                    table.on('toolbar(hcTest)',function(obj){
+                        var checkStatus = table.checkStatus(obj.config.id);
+                        switch(obj.event){
+                          case 'getCheckData':
+                          var data = checkStatus.data;
+                          layer.confirm('此操作将删除需求'
+                          ,function(index){
+                            var _list=[];
+                            for(var i=0;i<data.length;i++){
+                                _list.push($.trim(data[i].id));
+                            }
+                            
+                            var data_id = {
+                                Ids:JSON.stringify(_list),               
+                            };
+                            $.ajax({
+                                type:'post',
+                                async:true,
+                                url:"{{url_for('del_demand')}}",
+                                data:data_id,
+                                success:function (result) {
+                                    table.reload('hcTest');
+
+                                    layer.msg('已成功删除'
+                                    ,{
+                                        time:1000
+                                    });
+                                    
+                                },
+                                error: function(){
+                                    layer.msg('删除失败'
+                                    ,{
+                                        time:1000
+                                    });
+                                }
+                            });
+                          });
+                        
+                          break;
+                        }
+                      })
+                    
+                    table.on('tool(hcTest)', function(obj){
+                        var data = obj.data;
+                        //console.log(obj)
+                        if(obj.event === 'del'){
+                          layer.confirm('此操作将删除需求'
+                          ,function(index){
+                            var _list=[];
+                            _list.push($.trim(data.id));
+                            var data_id = {
+                                Ids:JSON.stringify(_list),                 
+                            };
+                            $.ajax({
+                                type:'post',
+                                async:true,
+                                url:"{{url_for('del_demand')}}",
+                                data:data_id,
+                                success:function (result) {
+
+                                    table.reload('hcTest');
+                                    layer.msg('已成功删除'+result+'条数据'
+                                    ,{
+                                        time:1000
+                                    });
+                                    
+                                },
+                                error: function(){
+                                    layer.msg('删除失败'
+                                    ,{
+                                        time:1000
+                                    });
+                                }
+                            });
+                          });
+                        }
+                      });
+                   
+
+
+            })
+        });
+    
+    </script>    
+
+{%endblock%}

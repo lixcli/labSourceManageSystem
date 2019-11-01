@@ -11,96 +11,45 @@
 </head>
 <body>
  
-<table class="layui-hide" id="sTest" lay-filter="sTest"></table>
+点击下面表格中的【签名列】，以演示单元格事件
  
-<script type="text/html" id="toolbarDemo">
-  <div class="layui-btn-container">
-    <button class="layui-btn layui-btn-sm" lay-event="getCheckData">删除选中行数据</button>
-    <!-- <button class="layui-btn layui-btn-sm" lay-event="getCheckLength">获取选中数目</button> -->
-    <!-- <button class="layui-btn layui-btn-sm" lay-event="isAll">验证是否全选</button> -->
-  <!-- TODO 全选操作 -->
-</div>
-</script>
- 
-<script type="text/html" id="barDemo">
-  <!-- <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a> -->
-  <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
-</script>
-              
+<table class="layui-table" lay-data="{height: 308, url:'/demo/table/user/'}" lay-filter="demoEvent">
+  <thead>
+    <tr>
+      <th lay-data="{field:'id', width:80}">ID</th>
+      <th lay-data="{field:'username', width:80}">用户名</th>
+      <th lay-data="{field:'sign', width:'50%', event: 'setSign', style:'cursor: pointer;'}">签名</th>
+      <th lay-data="{field:'experience'}">积分</th>
+      <th lay-data="{field:'score'}">评分</th>
+    </tr>
+  </thead>
+</table> 
+               
           
 <script src="//res.layui.com/layui/dist/layui.js" charset="utf-8"></script>
-<!-- 注意：如果你直接复制所有代码到本地，上述js路径需要改成你本地的 --> 
- 
+<!-- 注意：如果你直接复制所有代码到本地，上述js路径需要改成你本地的 -->
 <script>
 layui.use('table', function(){
-  var table = layui.table;
-  
-  table.render({
-    elem: '#test'
-    ,url:'/test/table/demo1.json'
-    ,toolbar: '#toolbarDemo' //开启头部工具栏，并为其绑定左侧模板
-    ,title: '软件数据表'
-    ,cols: [[
-      {type: 'checkbox', fixed: 'left'}
-      ,{field:'id', title:'软件id', width:80, fixed: 'left', unresize: true, sort: true}
-      ,{field:'sName', title:'软件名', width:120}
-      ,{field:'sVersion', title:'版本', width:150}
-      ,{field:'sSysType', title:'系统要求', width:80}
-      ,{field:'aId', title:'入库操作员', width:100}
-      ,{fixed: 'right', title:'操作', toolbar: '#barDemo', width:150}
-    ]]
-    ,page: true
-  });
-  
-  //头工具栏事件
-  table.on('toolbar(sTest)', function(obj){
-    var checkStatus = table.checkStatus(obj.config.id);
-    switch(obj.event){
-      case 'getCheckData':
-        var data = checkStatus.data;
-        var _list=[];
-        layer.confirm(
-            '此操作将删除数据库中对应的数据'
-            ,{
-                time:20000
-            },
-            ()=>{
-                var _list=[]
-                for(var i=0;i<data.length;i++)
-                {
-                    _list[i] = checkedRow[i].id;
-                }
-                $.post(
-                    "url_for(delete_check_softwares)",
-                    {
-                        ids:_list
-                    },
-                    function(data,status){
-                        if(status==='success'){
-                            table.reload('sTest')
-                            layer.msg('已删除'
-                            ,{
-                                time:1000
-                            })
-                        }
-                    }
-                )
-                }
-        )
-
-      break;
-                //后面再加功能
-    };
-  });
-  
-  //监听行工具事件
-  table.on('tool(test)', function(obj){
+  var table = layui.table; 
+  //监听单元格事件
+  table.on('tool(demoEvent)', function(obj){
     var data = obj.data;
-    //console.log(obj)
-    if(obj.event === 'del'){
-      layer.confirm('真的删除行么', function(index){
-        obj.del();
+    if(obj.event === 'setSign'){
+      layer.prompt({
+        formType: 2
+        ,title: '修改 ID 为 ['+ data.id +'] 的用户签名'
+        ,value: data.sign
+      }, function(value, index){
+        
+        
         layer.close(index);
+        
+        //这里一般是发送修改的Ajax请求
+        
+        //同步更新表格和缓存对应的值
+        obj.update({
+          sign: value
+        });
       });
     }
   });

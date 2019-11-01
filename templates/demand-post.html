@@ -1,0 +1,35 @@
+{% extends 'teacher-index.html' %}
+{%block title%}需求提交{%endblock%}
+
+{%block nav%}
+{{super()}}
+{%endblock%}
+
+{%block body%}
+<div id="demands">
+    <form class="layui-form" method="post">
+            {{ form.csrf_token }}
+
+        <fieldset class="layui-elem-field">
+            <legend>你的需求</legend>
+            <div class="layui-field-box">
+                <div class="layui-input-block">
+                    {{form.labId(class="layui-input",placeholder="实验室号",style="width:10%")}}
+                </div>
+                <div class="layui-input-block">
+                    {{ form.demand(class="layui-textarea", placeholder="请输入你的需求,不超过300字",style="width:60% hight:50%",maxlength="300") }}
+                </div>
+                <div class="layui-input-block">
+                    <button type="reset" class="layui-btn layui-btn-primary">清空</button>
+                    {{ form.submit(class="layui-btn",style="width:40%")}}
+                </div>
+            </div>
+        </fieldset>
+        </form>
+    </form>
+</div>
+{%endblock%}
+
+{%block script%}
+
+{%endblock%}

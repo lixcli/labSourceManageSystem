@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, SelectField, PasswordField,RadioField
+from wtforms import StringField, SubmitField, SelectField, PasswordField,RadioField,TextAreaField
 from wtforms.validators import DataRequired, EqualTo, Length
 
 
@@ -48,3 +48,9 @@ class labSetForm(FlaskForm):
 class EditInfoForm(FlaskForm):
     name = StringField(u'用户名', validators=[Length(1, 32)])
     submit = SubmitField(u'提交')
+
+class DemandForm(FlaskForm):
+    demand=TextAreaField(u'需求',validators=[DataRequired()])
+    labId=StringField(u'实验室号',validators=[DataRequired()])
+    submit=SubmitField(u'确认',validators=[DataRequired()])
+

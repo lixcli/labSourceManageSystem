@@ -121,4 +121,75 @@ DELETE FROM InstallList
 WHERE sId = '{sId}' AND cId='{cId}'
 '''
 
+# 当天最大需求id号
+max_today_demand=f'''
+SELECT max(CONVERT(INT,SUBSTRING(id,11,21))) FROM Demand WHERE id LIKE 'd'+(CONVERT(varchar(8),GETDATE(),112))+'/%'
+'''
 
+# 老师查看未完成的需求
+open_teacher_demand=lambda tId: f'''
+SELECT * FROM Demand
+WHERE tId='{tId}' AND closeDate is NULL
+'''
+
+# 老师查看完成的需求
+close_teacher_demand=lambda tId: f'''
+SELECT * FROM Demand
+WHERE tId='{tId}' AND closeDate IS NOT NULL
+'''
+
+# 查看所有未解决需求
+all_open_demand=f'''
+SELECT * FROM Demand
+WHERE closeDate is NULL
+'''
+# 查看所有我受理但是未解决的需求
+all_m_accepted_demand=lambda aId: f'''
+SELECT * FROM Demand
+WHERE aId='{aId}' AND closeDate is NULL
+'''
+
+# 查看所有我受理解决的需求
+all_m_close_demand=lambda aId: f'''
+SELECT * FROM Demand
+WHERE aId='{aId}' AND closeDate is NOT NULL
+'''
+
+# 受理需求
+set_demand_accept=lambda dId,aId: f'''
+UPDATE Demand
+SET aId='{aId}'
+WHERE id='{dId}'
+'''
+
+# 取消受理需求
+cancel_demand_accept=lambda dId,aId: f'''
+UPDATE Demand
+SET aId=NULL
+WHERE id='{dId}'
+'''
+
+close_accepted_demand=lambda dId: f'''
+UPDATE Demand
+SET closeDate=GETDATE()
+WHERE id='{dId}'
+'''
+
+set_demand_response=lambda dId,res: f'''
+UPDATE Demand
+SET response='{res}'
+WHERE id='{dId}'
+'''
+
+# 修改管理员密码
+set_admin_passwd=lambda id,pwd: f'''
+UPDATE Adminitrator
+SET pwd='{pwd}'
+WHERE id='{id}'
+'''
+# 修改用户密码
+set_teacher_passwd=lambda id,pwd: f'''
+UPDATE Teacher
+SET pwd='{pwd}'
+WHERE id='{id}'
+'''

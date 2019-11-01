@@ -18,6 +18,7 @@ from sql_for_lab import *
 from form import *
 import time
 import json
+import zlib
 app = Flask(__name__)
 
 # app.run(debug=True)
@@ -354,8 +355,8 @@ def newSoftware():
                 software.sName = request.form.get('sName')
                 software.version = request.form.get('sVersion')
                 db.session.add(software)
-                flash(u'软件信息添加成功！')
                 db.session.commit()
+                flash(u'软件信息添加成功！')
             except:
                 db.session.rollback()
                 flash(u'软件添加失败:(')
@@ -669,11 +670,258 @@ def export_computers_for_lab():
         return str(success),200
     else:
         return 'fail',403
-    
 
-# TODO 软件安装
+
+
+
+
+@app.route('/post_demand',methods=['GET','POST'])
+@login_required
+@user_required
+def post_demand():
+    form=DemandForm()
+    if form.validate_on_submit():
+        demand=Demand()
+        demand.aId=None
+        demand.tId=current_user.id
+        demand.response=None
+        demand.lId=form.labId.data
+        demand.inDate=time.strftime("%Y-%m-%d",time.localtime())
+        id=db.session.execute(max_today_demand).fetchall()[0][0]
+        if(id is None):
+            demand.id=f'd{time.strftime("%Y%m%d",time.localtime())}/1'
+        else:
+            id+=1
+            demand.id=f'd{time.strftime("%Y%m%d",time.localtime())}/{id}'
+        demand.content=form.demand.data
+        try:
+            db.session.add(demand)
+            db.session.commit()
+            flash('提交成功')
+        except Exception as e:
+            print(repr(e))
+            db.session.rollback()
+            flash('提交失败:(')
+    return render_template('demand-post.html', name=session.get('name'),role=session['role'], form=form) 
+# TODO 需求概览
+
+@app.route('/show_tDemand',methods=['GET','POST'])
+@login_required
+@user_required
+def show_tDemand():
+    return render_template('demand-show.html', name=session.get('name'),role=session['role'])
+
+@app.route('/close_tDemand',methods=['GET','POST'])
+@login_required
+@user_required
+def close_tDemand():
+    tId=current_user.id
+    sql=close_teacher_demand(tId)
+    demands=db.session.execute(sql)
+    data=[]
+    for demand in demands:
+        item={'id':demand.id,
+                'response':demand.response,
+                'closeDate':demand.closeDate,
+                'lId':demand.lId,
+                'content':demand.content,
+                'aId':demand.aId}
+        data.append(item)
+    table_result={"code":0,"msg":None,"count":len(data),"data":data}
+    return jsonify(table_result)
+
+@app.route('/open_tDemand',methods=['GET','POST'])
+@login_required
+@user_required
+def open_tDemand():
+    tId=current_user.id
+
+    sql=open_teacher_demand(tId)
+    demands=db.session.execute(sql)
+    data=[]
+    for demand in demands:
+        item={'id':demand.id,
+                'response':demand.response,
+                'closeDate':demand.closeDate,
+                'lId':demand.lId,
+                'status':'受理' if demand.aId is not None else '未受理',
+                'content':demand.content}
+        data.append(item)
+    table_result={"code":0,"msg":None,"count":len(data),"data":data}
+    return jsonify(table_result)
+
+@app.route('/del_demand',methods=['GET','POST'])
+@login_required
+def del_demand():
+    Ids=json.loads(request.form.get('Ids'))
+    success=0
+    for id in Ids:
+        try:
+            Demand.query.filter_by(id=id).delete()
+            db.session.commit()
+            success+=1
+        except:
+            db.session.rollback()
+    if success>0:
+        return str(success),200
+    else:
+        return 'fail',403
+
 # TODO 需求解决
-# TODO 计算机资源查找
-# TODO 计算机资源统计
+
+@app.route('/oper_demand',methods=['GET','POST'])
+@login_required
+@admin_required
+def operDemand():
+    return render_template('demand-oper.html', name=session.get('name'),role=session['role'])
 
 
+def getDemands(sql):
+    demands=db.session.execute(sql)
+    data=[]
+    for demand in demands:
+        item={'id':demand.id,
+                'response':demand.response,
+                'closeDate':demand.closeDate,
+                'lId':demand.lId,
+                'aId':demand.aId,
+                'tId':demand.tId,
+                'status':'受理' if demand.aId is not None else '未受理',
+                'content':demand.content}
+        data.append(item)
+    return data
+
+@app.route('/check_open_demand',methods=['GET','POST'])
+@login_required
+@admin_required
+def check_open_Demand():
+    data=getDemands(all_open_demand)
+    table_result={"code":0,"msg":None,"count":len(data),"data":data}
+    return jsonify(table_result)
+    
+@app.route('/check_accepted_demand',methods=['GET','POST'])
+@login_required
+@admin_required  
+def check_accepted_demand():
+    sql=all_m_accepted_demand(current_user.id)
+    data=getDemands(sql)
+    table_result={"code":0,"msg":None,"count":len(data),"data":data}
+    return jsonify(table_result)
+
+@app.route('/check_close_demand',methods=['GET','POST'])
+@login_required
+@admin_required  
+def check_close_aDemand():
+    sql=all_m_close_demand(current_user.id)
+    data=getDemands(sql)
+    table_result={"code":0,"msg":None,"count":len(data),"data":data}
+    return jsonify(table_result)
+
+
+# 需求受理与取消
+
+@app.route('/accept_demand',methods=['GET','POST'])
+@login_required
+@admin_required
+def accept_demand():
+    Ids=json.loads(request.form.get('Ids'))
+    success=0
+    for id in Ids:
+        try:
+            db.session.execute(set_demand_accept(id,current_user.id))
+            db.session.commit()
+            success+=1
+        except:
+            db.rollback()
+    if success > 0:
+        return str(success),200
+    else:
+        return 'fail',403
+
+@app.route('/cancel_accept_demand',methods=['GET','POST'])
+@login_required
+@admin_required
+def del_acDemand():
+    Ids=json.loads(request.form.get('Ids'))
+    success=0
+    for id in Ids:
+        try:
+            db.session.execute(cancel_demand_accept(id,current_user.id))
+            db.session.commit()
+            success+=1
+        except:
+            db.rollback()
+    if success > 0:
+        return str(success),200
+    else:
+        return 'fail',403
+
+@app.route('/close_accepted_demand',methods=['GET','POST'])
+@login_required
+@admin_required
+def close_acDemand():
+    Ids=json.loads(request.form.get('Ids'))
+    success=0
+    for id in Ids:
+        try:
+            db.session.execute(close_accepted_demand(id))
+            db.session.commit()
+            success+=1
+        except:
+            db.session.rollback()
+    if success > 0:
+        return str(success),200
+    else:
+        return 'fail',403    
+
+@app.route('/set_response',methods=['GET','POST'])
+@login_required
+@admin_required
+def set_response():
+    Ids=json.loads(request.form.get('Ids'))[0]
+    res=request.form.get('res')
+    success=0
+    try:
+        db.session.execute(set_demand_response(Ids,res))
+        db.session.commit()
+        success+=1
+    except:
+        db.session.rollback()
+        
+    if success > 0:
+        return str(success),200
+    else:
+        return 'fail',403  
+
+# TODO 电脑出库
+
+# TODO 密码修改用户名修改
+
+@app.route('/change_password', methods=['GET', 'POST'])
+@login_required
+def change_password():
+    form = ChangePasswordForm()
+    if form.password2.data != form.password.data:
+        flash(u'两次密码不一致！')
+    if form.validate_on_submit():
+        if current_user.verify_password(form.old_password.data):
+            password = generate_password_hash(form.password2.data)
+            if session['role']=='admin':
+                db.session.execute(set_admin_passwd(current_user.id,password))
+            elif session['role']=='teacher':
+                db.session.execute(set_teacher_passwd(current_user.id,password))
+            try:
+                db.session.commit()
+                flash(u'已成功修改密码！')
+                if(session['role'] == 'admin'):    
+                    return redirect(url_for('logout'))
+                if(session['role'] == 'teacher'):    
+                    return redirect(url_for('logout'))
+            except:
+                db.session.rollback()
+                flash(u'修改失败')
+                
+
+        else:
+            flash(u'原密码输入错误，修改失败！')
+    return render_template("change-password.html", form=form,name=session.get('name'),role=session['role'])

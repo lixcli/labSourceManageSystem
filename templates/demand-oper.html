@@ -1,0 +1,616 @@
+{%extends "admin-index.html" %}
+{%block title%}查看需求{%endblock%}
+{% block nav %}
+{{super()}}
+{% endblock%}
+
+<!-- 受理的数据可以添加回复 -->
+{%block body%}
+<div class="layui-collapse layui-show" id="udemand">
+    <div class="layui-colla-item">
+        <h2 class="layui-colla-title">全部未解决需求</h2>
+        <div class="layui-colla-content layui-show">
+        <table  id="ucTest" lay-filter="ucTest"></table>
+        </div>
+    </div>
+</div>
+<div class="layui-collapse layui-show" id="mdemand">
+    <div class="layui-colla-item">
+        <h2 class="layui-colla-title">我已受理的需求</h2>
+        <div class="layui-colla-content layui-show">
+        <table id="mcTest" lay-filter="mcTest"></table>
+        </div>
+    </div>
+</div>
+<div class="layui-collapse layui-show" id="hdemand">
+    <div class="layui-colla-item">
+        <h2 class="layui-colla-title">我已解决的需求</h2>
+        <div class="layui-colla-content layui-show">
+        <table id="hcTest" lay-filter="hcTest"></table>
+        </div>
+    </div>
+</div>
+
+{%endblock%}
+
+{%block script%}
+<script type="text/html" id="open">
+    <!-- <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a> -->
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="ac">受理</a>
+</script>
+<script type="text/html" id="accept">
+    <!-- <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a> -->
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="cl">解决</a>
+</script>
+<script type="text/html" id="close">
+    <!-- <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a> -->
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>
+    <script type="text/html" id="toolbar">
+        <div class="layui-btn-container">
+          <button class="layui-btn layui-btn-sm" lay-event="getCheckData">删除行数据</button>
+          <button class="layui-btn layui-btn-sm" lay-event="acceptCheckData">受理选中数据</button>
+          <!-- <button class="layui-btn layui-btn-sm" lay-event="isAll">验证是否全选</button> -->
+      </div>
+    </script>
+    <script type="text/html" id="toolbar2">
+        <div class="layui-btn-container">
+          <button class="layui-btn layui-btn-sm" lay-event="getCheckData">删除行数据</button>
+          <button class="layui-btn layui-btn-sm" lay-event="closeCheckData">解决选中数据</button>
+          <!-- <button class="layui-btn layui-btn-sm" lay-event="isAll">验证是否全选</button> -->
+      </div>
+    </script>
+    <script type="text/html" id="toolbar3">
+        <div class="layui-btn-container">
+          <button class="layui-btn layui-btn-sm" lay-event="getCheckData">删除行数据</button>
+          <!-- <button class="layui-btn layui-btn-sm" lay-event="isAll">验证是否全选</button> -->
+      </div>
+    </script>
+
+    <script>
+        $(document).ready(function(){
+            layui.use('table',function(){
+                var table = layui.table;
+                table.render({
+                    elem:'#ucTest',
+                    url:'{{url_for("check_open_Demand")}}',
+                    toolbar:'#toolbar',
+                    title:'未解决需求',
+                    cols:[[
+                        {type: 'checkbox', fixed: 'left'}
+                        ,{field:'id', title:'id', width:150, fixed: 'left', unresize: true, sort: true}
+                        ,{field:'lId', title:'实验室号', width:120}
+                        ,{field:'status', title:'状态', width:120}
+                        ,{field:'aId',title:'受理操作员',width:120}
+                        ,{field:'content',title:'内容',width:120}
+                        ,{field:'tId',title:'请求人',width:120}
+                        ,{fixed: 'right', title:'操作', toolbar: '#open', width:150}                                                     
+                    ]]
+                    ,page: true
+                    ,limit: 7
+                    ,response: {
+                        statusCode: 0 //重新规定成功的状态码为 200，table 组件默认为 0
+                      }
+                    ,parseData: function(res){ //res 即为原始返回的数据
+                        return {
+                          "code": res.code, //解析接口状态
+                          "msg": res.msg, //解析提示文本
+                          "count": res.count, //解析数据长度
+                          "data": res.data //解析数据列表
+                        };
+                      }                    
+                })
+            
+                table.render({
+                    elem:'#mcTest',
+                    url:'{{url_for("check_accepted_demand")}}',
+                    toolbar:'#toolbar2',
+                    title:'已受理需求',
+                    cols:[[
+                        {type: 'checkbox', fixed: 'left'}
+                        ,{field:'id', title:'id', width:150, fixed: 'left', unresize: true, sort: true}
+                        ,{field:'lId', title:'实验室号', width:120}
+                        ,{field:'content',title:'内容',width:120}
+                        ,{field:'response',title:'回复',event:'setRes',width:150}
+                        ,{field:'tId',title:'请求人',width:120}
+                        ,{field:'aId',title:'操作员',width:150}
+                        ,{fixed: 'right', title:'操作', toolbar: '#accept', width:150}                            
+                    ]]
+                    ,page: true
+                    ,limit: 7
+                    ,response: {
+                        statusCode: 0 //重新规定成功的状态码为 200，table 组件默认为 0
+                      }
+                    ,parseData: function(res){ //res 即为原始返回的数据
+                        return {
+                          "code": res.code, //解析接口状态
+                          "msg": res.msg, //解析提示文本
+                          "count": res.count, //解析数据长度
+                          "data": res.data //解析数据列表
+                        };
+                      }                    
+                })
+            
+                table.render({
+                    elem:'#hcTest',
+                    url:'{{url_for("check_close_aDemand")}}',
+                    toolbar:'#toolbar3',
+                    title:'已解决需求',
+                    where:{
+                        case:'close'
+                    },
+                    cols:[[
+                        {type: 'checkbox', fixed: 'left'}
+                        ,{field:'id', title:'id', width:150, fixed: 'left', unresize: true, sort: true}
+                        ,{field:'lId', title:'实验室号', width:120}
+                        ,{field:'content',title:'内容',width:120}
+                        ,{field:'tId',title:'请求人',width:120}
+                        ,{field:'closeDate',title:'解决日期',width:120}
+                        ,{field:'aId',title:'操作员',width:150}
+                        ,{fixed: 'right', title:'操作', toolbar: '#close', width:150}                            
+                    ]]
+                    ,page: true
+                    ,limit: 7
+                    ,response: {
+                        statusCode: 0 //重新规定成功的状态码为 200，table 组件默认为 0
+                      }
+                    ,parseData: function(res){ //res 即为原始返回的数据
+                        return {
+                          "code": res.code, //解析接口状态
+                          "msg": res.msg, //解析提示文本
+                          "count": res.count, //解析数据长度
+                          "data": res.data //解析数据列表
+                        };
+                      }                    
+                })
+            
+                table.on('toolbar(ucTest)',function(obj){
+                    
+                    var checkStatus = table.checkStatus(obj.config.id);
+                    switch(obj.event){
+                        case 'getCheckData':
+                        var data = checkStatus.data;
+                        layer.confirm('此操作将删除已经提交的需求'
+                        ,function(index){
+                        var _list=[];
+                        for(var i=0;i<data.length;i++){
+                            _list.push($.trim(data[i].id));
+                        }
+                        
+                        var data_id = {
+                            Ids:JSON.stringify(_list),                  
+                        };
+                        $.ajax({
+                            type:'post',
+                            async:true,
+                            url:"{{url_for('del_demand')}}",
+                            data:data_id,
+                            success:function (result) {
+                                layer.msg('已成功删除'+result+'条数据'
+                                ,{
+                                    time:1000
+                                });
+                                
+                            },
+                            error: function(){
+                                layer.msg('删除失败'
+                                ,{
+                                    time:1000
+                                });
+                            }
+                        });
+                        });
+                        
+                        break;
+                        case 'acceptCheckData':
+                        var data = checkStatus.data;
+                        layer.confirm('此操作将受理已经提交的需求'
+                        ,function(index){
+                        var _list=[];
+                        for(var i=0;i<data.length;i++){
+                            _list.push($.trim(data[i].id));
+                        }
+                        
+                        var data_id = {
+                            Ids:JSON.stringify(_list),                  
+                        };
+                        $.ajax({
+                            type:'post',
+                            async:true,
+                            url:"{{url_for('accept_demand')}}",
+                            data:data_id,
+                            success:function (result) {
+                                layer.msg('已成功登记'+result+'条数据'
+                                ,{
+                                    time:1000
+                                });
+                                
+                            },
+                            error: function(){
+                                layer.msg('登记失败'
+                                ,{
+                                    time:1000
+                                });
+                            }
+                        });
+                        });
+                        
+                        break;
+                    }  
+                })
+                
+                table.on('tool(ucTest)', function(obj){
+                    var data = obj.data;
+                    //console.log(obj)
+                    if(obj.event === 'del'){
+                        layer.confirm('此操作将删除需求'
+                        ,function(index){
+                        var _list=[];
+                        _list.push($.trim(data.id));
+                        var data_id = {
+                            Ids:JSON.stringify(_list),                
+                        };
+                        $.ajax({
+                            type:'post',
+                            async:true,
+                            url:"{{url_for('del_demand')}}",
+                            data:data_id,
+                            success:function (result) {
+                                layer.msg('已成功删除'+result+'条数据'
+                                ,{
+                                    time:1000
+                                });
+                                
+                            },
+                            error: function(){
+                                layer.msg('删除失败'
+                                ,{
+                                    time:1000
+                                });
+                            }
+                        });
+                        });
+                    
+                    }
+                    
+                    else if(obj.event === 'ac'){
+
+                        layer.confirm('此操作将受理需求'
+                        ,function(index){
+                        var _list=[];
+                        _list.push($.trim(data.id));
+                        var data_id = {
+                            Ids:JSON.stringify(_list),                
+                        };
+                        $.ajax({
+                            type:'post',
+                            async:true,
+                            url:"{{url_for('accept_demand')}}",
+                            data:data_id,
+                            success:function (result) {
+                                layer.msg('已成功登记'+result+'条数据'
+                                ,{
+                                    time:1000
+                                });
+                                
+                            },
+                            error: function(){
+                                layer.msg('登记失败'
+                                ,{
+                                    time:1000
+                                });
+                            }
+                        });
+                        });
+                    
+                    }
+
+                });
+                        
+                table.on('toolbar(mcTest)',function(obj){
+                    
+                    var checkStatus = table.checkStatus(obj.config.id);
+                    switch(obj.event){
+                        case 'getCheckData':
+                        var data = checkStatus.data;
+                        layer.confirm('此操作将取消已经受理的需求'
+                        ,function(index){
+                        var _list=[];
+                        for(var i=0;i<data.length;i++){
+                            _list.push($.trim(data[i].id));
+                        }
+                        
+                        var data_id = {
+                            Ids:JSON.stringify(_list),                  
+                        };
+                        $.ajax({
+                            type:'post',
+                            async:true,
+                            url:"{{url_for('del_acDemand')}}",
+                            data:data_id,
+                            success:function (result) {
+                                layer.msg('已成功取消'+result+'条数据'
+                                ,{
+                                    time:1000
+                                });
+                                layer.close();
+                            },
+                            error: function(){
+
+                                layer.msg('取消失败'
+                                ,{
+                                    time:1000
+                                });
+                                layer.close();
+                            }
+                        });
+                        });
+                        
+                        break;
+                        case 'closeCheckData':
+                        var data = checkStatus.data;
+                        layer.confirm('此操作将登记已经受理的需求为已解决'
+                        ,function(index){
+                        var _list=[];
+                        for(var i=0;i<data.length;i++){
+                            _list.push($.trim(data[i].id));
+                        }
+                        
+                        var data_id = {
+                            Ids:JSON.stringify(_list),                  
+                        };
+                        $.ajax({
+                            type:'post',
+                            async:true,
+                            url:"{{url_for('close_acDemand')}}",
+                            data:data_id,
+                            success:function (result) {
+                                layer.msg('已成功登记'+result+'条数据'
+                                ,{
+                                    time:1000
+                                });
+                                layer.close();
+                            },
+                            error: function(){
+                                layer.msg('登记取消'
+                                ,{
+                                    time:1000
+                                });
+                                layer.close();
+                            }
+                        });
+                        });
+                        
+                        break;
+
+                    }
+ 
+                })
+        
+                table.on('tool(mcTest)', function(obj){
+                    var data = obj.data;
+                    //console.log(obj)
+                    if(obj.event === 'del'){
+                        layer.confirm('此操作将取消受理需求'
+                        ,function(index){
+                        var _list=[];
+                        _list.push($.trim(data.id));
+                        var data_id = {
+                            Ids:JSON.stringify(_list),                
+                        };
+                        $.ajax({
+                            type:'post',
+                            async:true,
+                            url:"{{url_for('del_acDemand')}}",
+                            data:data_id,
+                            success:function (result) {
+                                layer.msg('已成功取消'+result+'条数据'
+                                ,{
+                                    time:1000
+                                });
+                                layer.close();
+                            },
+                            error: function(){
+                                layer.msg('取消失败'
+                                ,{
+                                    time:1000
+                                });
+                                layer.close();
+                            }
+                        });
+                        });
+                    
+                    }
+                      
+                    else if(obj.event === 'cl'){
+                        layer.confirm('此操作将登记受理需求为已解决'
+                        ,function(index){
+                        var _list=[];
+                        _list.push($.trim(data.id));
+                        var data_id = {
+                            Ids:JSON.stringify(_list),                
+                        };
+                        $.ajax({
+                            type:'post',
+                            async:true,
+                            url:"{{url_for('close_acDemand')}}",
+                            data:data_id,
+                            success:function (result) {
+
+                                layer.msg('已成功登记'+result+'条数据'
+                                ,{
+                                    time:1000
+                                });
+                                layer.close();
+                            },
+                            error: function(){
+                                layer.msg('登记失败'
+                                ,{
+                                    time:1000
+                                });
+                                layer.close();
+                            }
+                        });
+                        });
+                    
+                    }
+                    else if(obj.event === 'setRes'){
+                        
+                        layer.prompt({
+                            formType: 2
+                            ,title: '设置回复'
+                            ,value: data.response
+                          }, function(value, index){
+                            
+                            var _list=[];
+                            _list.push($.trim(data.id));
+                            var data_id = {
+                                Ids:JSON.stringify(_list),  
+                                res:value              
+                            };
+                            layer.close(index);
+                            console.log(value);
+                            //这里一般是发送修改的Ajax请求
+                            $.ajax({
+                                type:'post',
+                                async:true,
+                                url:"{{url_for('set_response')}}",
+                                data:data_id,
+                                success:function (result) {  
+                                    layer.msg('已成功登记'+result+'条数据'
+                                    ,{
+                                        time:1000
+                                    });
+                                    layer.close();
+                                },
+                                error: function(){
+                                    layer.msg('登记失败'
+                                    ,{
+                                        time:1000
+                                    });
+                                    layer.close();
+                                }
+                            });
+                            
+                            //同步更新表格和缓存对应的值
+                            obj.update({
+                              sign: value
+                            });
+                          });    
+                    }
+
+                });
+
+                setResponse=function(res,dId){
+                    $.ajax({
+                        type:'post',
+                        async:true,
+                        url:"{{url_for('set_response')}}",
+                        data:{
+                            res:res,
+                            id:dId
+                        },
+                        success:function (result) {  
+                            layer.msg('已成功登记'+result+'条数据'
+                            ,{
+                                time:1000
+                            });
+                            layer.close();
+                        },
+                        error: function(){
+                            layer.msg('登记失败'
+                            ,{
+                                time:1000
+                            });
+                            layer.close();
+                        }
+                    });
+                    
+                }
+
+                table.on('toolbar(hcTest)',function(obj){
+                    var checkStatus = table.checkStatus(obj.config.id);
+                    switch(obj.event){
+                        case 'getCheckData':
+                        var data = checkStatus.data;
+                        layer.confirm('此操作将删除需求'
+                        ,function(index){
+                        var _list=[];
+                        for(var i=0;i<data.length;i++){
+                            _list.push($.trim(data[i].id));
+                        }
+                        
+                        var data_id = {
+                            Ids:JSON.stringify(_list),               
+                        };
+                        $.ajax({
+                            type:'post',
+                            async:true,
+                            url:"{{url_for('del_demand')}}",
+                            data:data_id,
+                            success:function (result) {
+
+                                layer.msg('已成功删除'
+                                ,{
+                                    time:1000
+                                });
+                                layer.close();
+                            },
+                            error: function(){
+                                layer.msg('删除失败'
+                                ,{
+                                    time:1000
+                                });
+                                layer.close();
+                            }
+                        });
+                        });
+                    
+                        break;
+                    }
+                })     
+                table.on('tool(hcTest)', function(obj){
+                        var data = obj.data;
+                        //console.log(obj)
+                        if(obj.event === 'del'){
+                          layer.confirm('此操作将删除需求'
+                          ,function(index){
+                            var _list=[];
+                            _list.push($.trim(data.id));
+                            var data_id = {
+                                Ids:JSON.stringify(_list),                 
+                            };
+                            $.ajax({
+                                type:'post',
+                                async:true,
+                                url:"{{url_for('del_demand')}}",
+                                data:data_id,
+                                success:function (result) {
+
+
+                                    layer.msg('已成功删除'+result+'条数据'
+                                    ,{
+                                        time:1000
+                                    });
+                                    layer.close();
+                                },
+                                error: function(){
+                                    layer.msg('删除失败'
+                                    ,{
+                                        time:1000
+                                    });
+                                    layer.close();
+                                }
+                            });
+                          });
+                        }
+
+                    });
+            })
+        });
+    
+    </script>    
+
+{%endblock%}
