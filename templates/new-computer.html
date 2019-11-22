@@ -1,0 +1,64 @@
+{% extends 'admin-index.html' %}
+{% block title %}电脑管理{% endblock %}
+
+{% block card %}
+    <div class="layui-card-header">
+        <h2>电脑入库</h2>
+        <button class="layui-btn layui-btn-lg" style="float:right;margin-top:-50px;margin-right:40px;" id="computerSet">
+            <i class="layui-icon">&#xe608;</i>查看闲置电脑
+        </button>
+    </div>
+{% endblock %}
+{% block nav %}
+{{super()}}
+{% endblock %}
+{% block body %}
+    <br />
+    <form class="layui-form" method="post">
+        {{ form.csrf_token }}
+            <fieldset class="layui-elem-field">
+                <legend>电脑信息</legend>
+                <div class="layui-form-item">
+                    <table class="layui-table">
+
+                        <thead>
+                            <th>电脑名</th>
+                            <th>出厂商</th>
+                            <th>cpu级别</th>
+                            <th>内存大小</th>
+                            <th>预装系统</th>
+                        </thead>
+                        
+                        <tbody>
+                            <td>{{form.cName(class="layui-input",style="border-style:none ")}}</td>
+                            <td>{{form.cProducer(class="layui-input",style="border-style:none")}}</td>
+                            <td>{{form.cpu(class="layui-input",style="display:none")}}</td>
+                            <td>{{form.cMm(class="layui-input",style="display:none")}}</td>
+                            <td>{{form.cSys(class="layui-input",style="border-style:none")}}</td>
+                        </tbody>
+                    </table>
+                </div>
+            </fieldset>
+            <!-- </fieldset> -->
+        <div class="layui-input-block">
+            <input id="count" name="count" type="text" class="layui-btn layui-btn-primary" style="width:40%" placeholder="数量">
+            <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+            {{ form.submit(class="layui-btn", style="width:40%") }}
+        </div>
+    </form>
+{% endblock %}
+{% block script %}
+<script type="text/javascript">
+    layui.use(['form','jquery'], function () {
+        var form = layui.form;
+        var $ = layui.$;
+
+    });
+    $(document).ready(function(){
+        $("#computerSet").on('click',function () {
+            window.location.href="{{ url_for('computer_manage.removeComputer') }}";
+        })
+    });
+
+</script>
+{% endblock %}

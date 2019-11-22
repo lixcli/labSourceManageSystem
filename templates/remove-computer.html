@@ -1,0 +1,188 @@
+{% extends "admin-index.html" %}
+{% block title %}闲置电脑{% endblock %}
+
+{% block card %}
+    <div class="layui-card-header">
+        <h2>电脑入库</h2>
+        <button class="layui-btn layui-btn-lg" style="float:right;margin-top:-50px;margin-right:40px;" id="computerSet">
+            <i class="layui-icon">&#xe608;</i>电脑入库
+        </button>
+    </div>
+{% endblock %}
+
+{% block nav %}
+{{super()}}
+{% endblock %}
+{% block body %}
+<br />
+<form class="layui-form" method="post">
+    {{ form.csrf_token }}
+        <fieldset class="layui-elem-field">
+            <legend>电脑编号</legend>
+            <div class="layui-field-box">
+                <div class="layui-input-block">
+                    <input id="cId" name="cId" type="text" class="layui-input" style="width:40%">
+                </div>
+            </div>
+        </fieldset>
+        <button type="reset" class="layui-btn layui-btn-primary">重新填写</button>
+        {{ form.submit(class="layui-btn", style="width:40%") }}
+</form>
+
+<div class="layui-collapse layui-show" id="udemand">
+    <div class="layui-colla-item">
+        <h2 class="layui-colla-title">闲置电脑</h2>
+        <div class="layui-colla-content layui-show">
+        <table  id="Test" lay-filter="Test"></table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script type="text/html" id="outbar">
+    <!-- <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a> -->
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+    <!-- <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="reset">重置</a> -->
+</script>
+
+<script type="text/html" id="toolbar">
+    <div class="layui-btn-container">
+      <button class="layui-btn layui-btn-sm" lay-event="getCheckData">删除行数据</button>
+      <!-- <button class="layui-btn layui-btn-sm" lay-event="resetCheckData">行数据</button> -->
+      <!-- <button class="layui-btn layui-btn-sm" lay-event="getCheckLength">获取选中数目</button> -->
+      <!-- <button class="layui-btn layui-btn-sm" lay-event="isAll">验证是否全选</button> -->
+  </div>
+</script>
+
+<script>
+    $(document).ready(function(){
+        $("#computerSet").on('click',function () {
+            window.location.href="{{ url_for('computer_manage.newComputer') }}";
+        })
+        layui.use('table',function(){
+            var table = layui.table;
+            table.render({
+                elem:'#Test',
+                url:'{{url_for("computer_manage.check_avil_computer")}}',
+                toolbar:'#toolbar',
+                title:'用户表',
+                cols:[[
+                    {type: 'checkbox', fixed: 'left'}
+                    ,{field:'id', title:'id', width:150, fixed: 'left', unresize: true, sort: true}
+                    ,{field:'cName', title:'电脑名', width:120}
+                    ,{field:'producer', title:'出厂商', width:120}
+                    ,{field:'cpu', title:'cpu级别', width:120}
+                    ,{field:'cMm', title:'内存', width:120}
+                    ,{field:'normal',title:'状态',width:120}
+                    ,{field:'aId',title:'入库操作员',width:120}
+                    ,{fixed: 'right', title:'删除', toolbar: '#outbar', width:150}                            
+                ]]
+                
+                //,page:true(自带的这个要注掉)
+               ,page: { //支持传入 laypage 组件的所有参数（某些参数除外，如：jump/elem） - 详见文档
+                    limit:5,//要传向后台的每页显示条数
+                    limits:[5,10,15]
+                  }
+            
+      
+                ,response: {
+                    statusCode: 0 //重新规定成功的状态码为 200，table 组件默认为 0
+                  }
+                ,parseData: function(res){ //res 即为原始返回的数据
+                    return {
+                      "code": res.code, //解析接口状态
+                      "msg": res.msg, //解析提示文本
+                      "count": res.count, //解析数据长度
+                      "data": res.data //解析数据列表
+                    };
+                  }
+
+            })
+            table.on('toolbar(Test)',function(obj){
+                
+                var checkStatus = table.checkStatus(obj.config.id);
+                switch(obj.event){
+                    case 'getCheckData':
+                    var data = checkStatus.data;
+                    layer.confirm('此操作将删除已经登记的电脑'
+                    ,function(index){
+                    var _list=[];
+                    for(var i=0;i<data.length;i++){
+                        _list.push($.trim(data[i].id));
+                    }
+                    
+                    var data_id = {
+                        Ids:JSON.stringify(_list),                  
+                    };
+                    $.ajax({
+                        type:'post',
+                        async:true,
+                        url:"{{url_for('computer_manage.del_computer')}}",
+                        data:data_id,
+                        success:function (result) {
+                            table.reload('Test');
+
+                            layer.msg('已成功删除'+result+'条数据'
+                            ,{
+                                time:1000
+                            });
+                            
+                        },
+                        error: function(){
+                            layer.msg('删除失败'
+                            ,{
+                                time:1000
+                            });
+                        }
+                    });
+                    });
+                
+                    break;
+                }
+                })
+            
+            table.on('tool(Test)', function(obj){
+                var data = obj.data;
+                //console.log(obj)
+                if(obj.event === 'del'){
+                    layer.confirm('此操作将删除该电脑数据'
+                    ,function(index){
+                    var _list=[];
+                    _list.push($.trim(data.id));
+                    var data_id = {
+                        Ids:JSON.stringify(_list),                
+                    };
+                    $.ajax({
+                        type:'post',
+                        async:true,
+                        url:"{{url_for('computer_manage.del_computer')}}",
+                        data:data_id,
+                        success:function (result) {
+                            table.reload('Test');
+
+                            layer.msg('已成功删除'+result+'条数据'
+                            ,{
+                                time:1000
+                            });
+                            
+                        },
+                        error: function(){
+                            layer.msg('删除失败'
+                            ,{
+                                time:1000
+                            });
+                        }
+                    });
+                    });
+                
+                }
+                });
+                    
+
+        })
+    });
+
+</script>
+{% endblock %}

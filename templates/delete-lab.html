@@ -1,0 +1,47 @@
+{% extends 'admin-index.html' %}
+{% block title %}实验室管理{% endblock %}
+
+{% block card %}
+    <div class="layui-card-header">
+        <h2>实验室注销</h2>
+        <button class="layui-btn layui-btn-lg" style="float:right;margin-top:-50px;margin-right:40px;" id="newLab">
+            <i class="layui-icon">&#xe608;</i>登记新实验室
+        </button>
+    </div>
+{% endblock %}
+{% block nav %}
+{{super()}}
+{% endblock %}
+{% block body %}
+    <br />
+    <form class="layui-form" method="post">
+        {{ form.csrf_token }}
+            <fieldset class="layui-elem-field">
+                <legend>实验室编号</legend>
+                <div class="layui-field-box">
+                    <div class="layui-input-block">
+                        {{ form.labId(class="layui-input", style="width:40%") }}
+                    </div>
+                </div>
+            </fieldset>
+        <div class="layui-input-block">
+            <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+            {{ form.submit(class="layui-btn", style="width:40%") }}
+        </div>
+    </form>
+{% endblock %}
+{% block script %}
+<script type="text/javascript">
+    layui.use(['form','jquery'], function () {
+        var form = layui.form;
+        var $ = layui.$;
+
+    });
+    $(document).ready(function(){
+        $("#computerSet").on('click',function () {
+            window.location.href="{{ url_for('lab_manage.newLab') }}";
+        })
+    });
+
+</script>
+{% endblock %}

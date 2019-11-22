@@ -1,0 +1,394 @@
+{% extends "base.html" %}
+{% block title %}首页{% endblock %}
+
+{% block nav %}
+{{ super() }}
+<li class="layui-nav-item">
+    <a class="" href="javascript:;">实验室管理</a>
+    <dl class="layui-nav-child">
+        <dd><a href="{{url_for('lab_manage.newLab')}}">新实验室登记</a></dd>
+    </dl>
+    <dl class="layui-nav-child">
+        <dd><a href="{{url_for('lab_manage.deleteLab')}}">实验室注销</a></dd>
+    </dl>
+    <dl class="layui-nav-child">
+        <dd><a href="{{url_for('lab_manage.labSet')}}">实验室软件配置</a></dd>
+    </dl>
+    <dl class="layui-nav-child">
+        <dd><a href="{{url_for('lab_manage.labComputer')}}">实验室电脑配置</a></dd>
+    </dl>
+
+</li>
+<li class="layui-nav-item">
+    <a class="" href="javascript:;">软件管理</a>
+    <dl class="layui-nav-child">
+        <dd><a href="{{url_for('soft_manage.newSoftware')}}">软件入库</a></dd>
+    </dl>
+</li>
+<li class="layui-nav-item">
+    <a class="" href="javascript:;">电脑管理</a>
+    <dl class="layui-nav-child">
+        <dd><a href="{{url_for('computer_manage.newComputer')}}">电脑入库</a></dd>
+    </dl>
+    <dl class="layui-nav-child">
+        <dd><a href="{{url_for('computer_manage.removeComputer')}}">闲置电脑</a></dd>
+    </dl>
+</li>
+<li class="layui-nav-item">
+    <a class="" href="{{url_for('demand_manage.operDemand')}}">需求管理</a>
+</li>
+<li class="layui-nav-item">
+    <a class="" href="{{url_for('user_manage.manage_user')}}">用户管理</a>
+</li>
+<!-- TODO 管理员软件需求视图 -->
+{#
+<li class="layui-nav-item">
+    <a class="" href="javascript:;">软件设置</a>
+    <!-- TODO 软件增删改统 -->
+</li>
+<li class="layui-nav-item">
+    <a href="javascript:;">需求查看</a>
+    <dl class="lay-ui-child">
+        <dd><a href="{{url_for('demandOpen')}}">未解决需求</a></dd>
+        <dd><a href="{{url_for('demandClosed')}}">已解决需求</a></dd>
+    </dl>
+</li>
+#}
+{% endblock %}
+{% block body %}
+
+<!-- 设置折叠表格 -->
+<div class="layui-collapse">
+    <div class="layui-colla-item">
+      <h2 class="layui-colla-title"><i class="layui-icon">&#xe653;</i> 软件×<span id="software"></span></h2>
+      <div class="layui-colla-content layui-show">
+        <table class="layui-hide" id="sTest" lay-filter="sTest"></table>
+      </div>
+    </div>
+    <div class="layui-colla-item">
+      <h2 class="layui-colla-title"><i class="layui-icon">&#xe68e;</i>  实验室×<span id="lab"></span></h2>
+      <div class="layui-colla-content layui-show">
+        <table class="layui-hide" id="lTest" lay-filter="lTest"></table>
+      </div>
+    </div>
+</div>
+{% endblock %}
+{% block script %}
+<script type="text/html" id="toolbar">
+    <div class="layui-btn-container">
+      <button class="layui-btn layui-btn-sm" lay-event="getCheckData">删除选中行数据</button>
+      <button class ="layui-btn layui-btn-primary layui-btn-sm" data-type ="reload" lay-event="search"><i class="layui-icon">&#xe615;</i></button>
+      <button class ="layui-btn layui-btn layui-btn-sm" data-type ="reload" lay-event="reload"><i class="layui-icon" >&#xe669;</i></button>
+      
+    </div>
+</script>
+<script type="text/html" id="bar">
+<!-- <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a> -->
+<a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+<a class="layui-btn layui-btn layui-btn-xs" lay-event="info">详情</a>
+</script>
+            
+<script>
+    layui.use(['table','layer'], function(){
+      var table = layui.table;
+      var layer = layui.layer
+      table.render({
+        elem: '#sTest'
+        ,skin: 'nob'
+        ,size: 'lg'
+        ,url:'{{ url_for("soft_manage.check_softwares") }}'
+        ,toolbar: '#toolbar' //开启头部工具栏，并为其绑定左侧模板
+        ,title: '软件数据表'
+        
+        ,cols: [[
+          {type: 'checkbox', fixed: 'left'}
+          ,{field:'id', title:'软件id', width:150, fixed: 'left', unresize: true, sort: true}
+          ,{field:'sName', title:'软件名', width:120}
+          ,{field:'version', title:'版本', width:120}
+          ,{field:'sysType', title:'系统要求', width:150}
+          ,{field:'aId', title:'入库操作员', width:180}
+          ,{fixed: 'right', title:'操作', toolbar: '#bar', width:150}
+        ]]
+        ,align:"center"
+        ,page: true
+        ,limit: 7
+        ,response: {
+            statusCode: 0 //重新规定成功的状态码为 200，table 组件默认为 0
+          }
+        ,parseData: function(res){ //res 即为原始返回的数据
+            $('#software').text(String(res.count));
+            return {
+              "code": res.code, //解析接口状态
+              "msg": res.msg, //解析提示文本
+              "count": res.count, //解析数据长度
+              "data": res.data //解析数据列表
+            };
+          }
+
+      });
+      
+      //头工具栏事件
+      table.on('toolbar(sTest)', function(obj){
+        var checkStatus = table.checkStatus(obj.config.id);
+        switch(obj.event){
+          case 'getCheckData':
+            var data = checkStatus.data;
+            var _list=[];
+            layer.confirm(
+                '此操作将删除数据库中对应的数据'
+                ,{
+                    time:20000
+                },
+                (index)=>{
+                    var _list= [];
+                    for(var i=0;i<data.length;i++)
+                    {
+                        _list.push($.trim(data[i].id));
+                    }
+
+                    var data_id = {
+                        ids:JSON.stringify(_list)
+                    };
+                    $.ajax({
+                        type:'post',
+                        async:true,
+                        url:"{{url_for('soft_manage.delete_check_softwares')}}",
+                        data:data_id,
+                        success:function (result) {
+                            table.reload('sTest');
+                            layer.msg('已删除'
+                            ,{
+                                time:1000
+                            });
+  
+                        },
+                        error: function(){
+                            layer.msg('删除失败'
+                            ,{
+                                time:1000
+                            })}
+                        
+                    });
+                    layer.close();
+                    }
+
+            )
+    
+          break;
+          case 'search':
+            layer.prompt({
+              formType: 2,
+              value: '',
+              title: '😀搜!' 
+            }, function(value, index, elem){
+              //alert(value); //得到value
+              table.reload('sTest', { //表格的id
+                where: {
+                    'main_search':value
+                }
+            });
+              layer.close(index);
+            });
+
+          break;
+
+          case 'reload':
+            table.reload('sTest');
+          break;
+                    //后面再加功能
+        };
+      });
+      
+      //监听行工具事件
+      table.on('tool(sTest)', function(obj){
+        var data = obj.data;
+        //console.log(obj)
+    
+
+        if(obj.event === 'del'){
+          layer.confirm('该数据将从数据库删除', function(index){
+            var _list=[];
+            _list.push($.trim(data.id));
+            obj.del();
+            var data_id = {
+                ids:JSON.stringify(_list)
+            };
+            $.ajax({
+                type:'post',
+                async:true,
+                url:"{{url_for('soft_manage.delete_check_softwares')}}",
+                data:data_id,
+                success:function (result) {
+                    layer.msg('已删除'
+                    ,{
+                        time:1000
+                    });
+                    
+                },
+                error: function(){
+                    layer.msg('删除失败'
+                    ,{
+                        time:1000
+                    });
+                }
+            });
+
+            layer.close(index);
+          });
+        }
+        else if(obj.event === 'info'){
+          window.location.href="/soft_info/"+"?sId="+String(data.id)
+        }
+
+      });
+    
+      
+      table.render({
+        elem: '#lTest'
+        ,url:'{{ url_for("lab_manage.check_labs") }}'
+        ,toolbar: '#toolbar' //开启头部工具栏，并为其绑定左侧模板
+        ,title: '实验室数据表'
+        ,skin: 'nob'
+        ,size: 'lg'
+        ,cols: [[
+          {type: 'checkbox', fixed: 'left'}
+          ,{field:'id', title:'实验室号', width:150, fixed: 'left', unresize: true, sort: true}
+          ,{field:'lName', title:'实验室名', width:120}
+          ,{field:'count', title:'实验室电脑容量', width:120}
+          ,{field:'aId', title:'入库操作员', width:180}
+          ,{fixed: 'right', title:'操作', toolbar: '#bar', width:150}
+        ]]
+        ,page: true
+        ,limit: 7
+        ,response: {
+            statusCode: 0 //重新规定成功的状态码为 200，table 组件默认为 0
+          }
+        ,parseData: function(res){ //res 即为原始返回的数据
+            $('#lab').text(String(res.count));
+            return {
+              "code": res.code, //解析接口状态
+              "msg": res.msg, //解析提示文本
+              "count": res.count, //解析数据长度
+              "data": res.data //解析数据列表
+            };
+          }
+
+      });
+      
+      //头工具栏事件
+      table.on('toolbar(lTest)', function(obj){
+        var checkStatus = table.checkStatus(obj.config.id);
+        switch(obj.event){
+          case 'getCheckData':
+            var data = checkStatus.data;
+            var _list=[];
+            layer.confirm(
+                '此操作将删除数据库中对应的数据'
+                ,{
+                    time:20000
+                },
+                (index)=>{
+                    var _list= [];
+                    for(var i=0;i<data.length;i++)
+                    {
+                        _list.push($.trim(data[i].id));
+                    }
+
+                    var data_id = {
+                        ids:JSON.stringify(_list)
+                    };
+                    $.ajax({
+                        type:'post',
+                        async:true,
+                        url:"{{url_for('lab_manage.delete_check_labs')}}",
+                        data:data_id,
+                        success:function (result) {
+                            table.reload('sTest');
+                            layer.msg('已删除'
+                            ,{
+                                time:1000
+                            });
+  
+                        },
+                        error: function(){
+                            layer.msg('删除失败'
+                            ,{
+                                time:1000
+                            })}
+                        
+                    });
+                    layer.close();
+                    }
+
+            )
+    
+          break;
+          case 'search':
+          layer.prompt({
+            formType: 2,
+            value: '',
+            title: '😀搜!' 
+          }, function(value, index, elem){
+            //alert(value); //得到value
+            table.reload('lTest', { //表格的id
+              where: {
+                  'main_search':value
+              }
+          });
+            layer.close(index);
+          });
+          break;
+          case 'reload':
+            table.reload('lTest');
+          break;
+                    //后面再加功能
+        };
+      });
+      
+      //监听行工具事件
+      table.on('tool(lTest)', function(obj){
+        var data = obj.data;
+        //console.log(obj)
+    
+
+        if(obj.event === 'del'){
+          layer.confirm('该数据将从数据库删除', function(index){
+            var _list=[];
+            _list.push($.trim(data.id));
+            obj.del();
+            var data_id = {
+                ids:JSON.stringify(_list)
+            };
+            $.ajax({
+                type:'post',
+                async:true,
+                url:"{{url_for('lab_manage.delete_check_labs')}}",
+                data:data_id,
+                success:function (result) {
+                    layer.msg('已删除'
+                    ,{
+                        time:1000
+                    });
+                    
+                },
+                error: function(){
+                    layer.msg('删除失败'
+                    ,{
+                        time:1000
+                    });
+                }
+            });
+
+            layer.close(index);
+          });
+        }
+        
+        else if(obj.event === 'info'){
+          window.location.href="/lab_info/"+"?labId="+String(data.id)
+        }
+      });
+    
+      
+    });
+    </script>
+{% endblock %}
