@@ -56,8 +56,3 @@ def softInfo():
 
     return render_template('soft-info.html',name=session.get('name'),role=session['role'],sId=sId,soft=soft,form=form)
 
-@soft_manage.route('/soft_form/',methods=['GET','POST'])
-@login_required
-@admin_required
-def soft_form():
-    render_template('soft-form.html')

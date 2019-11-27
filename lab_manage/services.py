@@ -11,6 +11,7 @@ def check_labs():
     main_search = request.args.get('main_search')
     if sId is  None  and main_search is None and info_search is None:
         labs=db.session.query(Laboratory).order_by('id').limit(limit).offset((page-1)*limit).all()
+        labs_len = db.session.query(Laboratory).count()
         # labs_len=labs.count()
     elif info_search is not None:
         info_search = '%'.join(list(info_search))
@@ -20,22 +21,24 @@ def check_labs():
         lIds = db.session.query(Computer.lId).filter(Computer.id.in_(cIds))
         labs = db.session.query(Laboratory)\
                            .filter(and_(Laboratory.lName.like(info_search),Laboratory.id.in_(lIds))).all()
-
+        labs_len = db.session.query(Laboratory)\
+                           .filter(and_(Laboratory.lName.like(info_search),Laboratory.id.in_(lIds))).count()
                    
     elif sId is not None:
         cIds = db.session.query(InstallList.cId).filter(InstallList.sId==sId)
         lIds = db.session.query(Computer.lId).filter(Computer.id.in_(cIds))
         labs = db.session.query(Laboratory)\
                            .filter(Laboratory.id.in_(lIds)).all()
-    
+        labs_len = db.session.query(Laboratory)\
+                           .filter(Laboratory.id.in_(lIds)).count()
     elif main_search is not None:
         main_search = '%'.join(list(main_search))
         if len(main_search)>0:
             main_search = '%'+main_search+'%'
         labs=db.session.query(Laboratory).filter(Laboratory.lName.like(main_search)).order_by('id').limit(limit).offset((page-1)*limit).all()
  
-
-    labs_len=len(labs)
+        labs_len = db.session.query(Laboratory).filter(Laboratory.lName.like(main_search)).count()
+    # labs_len=len(labs)
     data=[]
     for lab in labs:
         hcount=db.session.query(Computer).filter_by(lId=lab.id).count()

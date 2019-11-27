@@ -17,7 +17,7 @@ def check_softwares():
         if len(main_search)>0:
             main_search = '%'+main_search+'%'
         softwares=db.session.query(Software).filter(Software.sName.like(main_search)).order_by('id').limit(limit).offset((page-1)*limit).all()
-        softwares_len=softwares.count()
+        softwares_len=db.session.query(Software).filter(Software.sName.like(main_search)).count()
     elif info_search is not None:
         info_search = '%'.join(list(info_search))
         if len(info_search)>0:
