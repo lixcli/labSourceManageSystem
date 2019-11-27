@@ -38,15 +38,30 @@ def check_labs():
     labs_len=len(labs)
     data=[]
     for lab in labs:
+        hcount=db.session.query(Computer).filter_by(lId=lab.id).count()
         item={'id':lab.id,
                     'lName':lab.lName,
                     'aId':lab.aId,
-                    'count':lab.cCount}
+                    'count':lab.cCount,
+                    'hcount':hcount}
         data.append(item)
     table_result = {"code": 0, "msg": None, "count": labs_len, "data": data}
     return jsonify(table_result)    
     
+@lab_manage.route('/set_lab',methods=['POST'])
+@login_required
+@admin_required
+def set_lab():
+    lId = request.form.get('labId')
+    lab = db.session.query(Laboratory).filter_by(id=lId).first()
+    lab.lName = request.form.get('lName')
 
+    try:
+        db.session.commit()
+        return 'success',200
+    except:
+        db.session.rollback()
+        return 'fail',404
 @lab_manage.route('/delete_labs',methods=['POST'])
 @login_required
 @admin_required

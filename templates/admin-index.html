@@ -40,20 +40,8 @@
 <li class="layui-nav-item">
     <a class="" href="{{url_for('user_manage.manage_user')}}">用户管理</a>
 </li>
-<!-- TODO 管理员软件需求视图 -->
-{#
-<li class="layui-nav-item">
-    <a class="" href="javascript:;">软件设置</a>
-    <!-- TODO 软件增删改统 -->
-</li>
-<li class="layui-nav-item">
-    <a href="javascript:;">需求查看</a>
-    <dl class="lay-ui-child">
-        <dd><a href="{{url_for('demandOpen')}}">未解决需求</a></dd>
-        <dd><a href="{{url_for('demandClosed')}}">已解决需求</a></dd>
-    </dl>
-</li>
-#}
+
+
 {% endblock %}
 {% block body %}
 
@@ -254,7 +242,8 @@
           {type: 'checkbox', fixed: 'left'}
           ,{field:'id', title:'实验室号', width:150, fixed: 'left', unresize: true, sort: true}
           ,{field:'lName', title:'实验室名', width:120}
-          ,{field:'count', title:'实验室电脑容量', width:120}
+          ,{field:'count', title:'实验室电脑数', width:120}
+          ,{field:'hcount', title:'已有电脑数', width:120}
           ,{field:'aId', title:'入库操作员', width:180}
           ,{fixed: 'right', title:'操作', toolbar: '#bar', width:150}
         ]]

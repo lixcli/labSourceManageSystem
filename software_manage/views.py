@@ -38,18 +38,26 @@ def newSoftware():
 
 @soft_manage.route('/soft_info/',methods=['GET','POST'])
 @login_required
-def labInfo():
+@admin_required
+def softInfo():
     sId = request.args.get('sId')
+    form = newSoftwareForm()
     class tmp:
         pass
     soft = tmp()
     res = db.session.query(Software).filter_by(id=sId).first()
     if res is not None:
-        soft.sName = res.sName
-        soft.sysType = res.sysType
-        soft.version = res.version
+        form.sName = soft.sName = res.sName
+        form.sysType = soft.sysType = res.sysType
+        form.sVersion = soft.version = res.version
     else:
         return 'fail',404
 
-    return render_template('soft-info.html',name=session.get('name'),role=session['role'],sId=sId,soft=soft)
 
+    return render_template('soft-info.html',name=session.get('name'),role=session['role'],sId=sId,soft=soft,form=form)
+
+@soft_manage.route('/soft_form/',methods=['GET','POST'])
+@login_required
+@admin_required
+def soft_form():
+    render_template('soft-form.html')

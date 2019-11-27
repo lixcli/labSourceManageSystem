@@ -130,6 +130,27 @@ def uninstall_softwares_for_lab():
     else:
         return 'fail',404
 
+@soft_manage.route('/soft_set',methods=['POST'])
+@login_required
+@admin_required
+def soft_set():
+    sId = request.form.get('sId')
+    software = db.session.query(Software).filter_by(id=sId).first()
+    software.sysType = request.form.get('sSysType')
+    software.sName = request.form.get('sName')
+    software.version = request.form.get('sVersion')
+    # sId = request.args.get('sId')
+    # software = db.session.query(Software).filter_by(id=sId).first()
+    # software.sysType = request.args.get('sSysType')
+    # software.sName = request.args.get('sName')
+    # software.version = request.args.get('sVersion')
+    try:
+
+        db.session.commit()
+        return "success", 200
+    except:
+        db.session.rollback()
+        return 'fail',404
 
 @soft_manage.route('/lab_softwares/<labId>',methods=['GET','POST'])
 @login_required

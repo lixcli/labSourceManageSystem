@@ -8,8 +8,28 @@
 {%endblock%}
 {% block title %}软件详情{% endblock %}
 {%block body%}
+
+<!-- 弹出层表单 -->
+<form id="form" class="layui-form" method="post" style="display:none">
+    <legend>软件名</legend>
+    <input type="text" name="sName" id="sName" class="layui-input", style="width:100%" required="required"/>
+    <br>
+    <legend>版本</legend>
+    <input type="text" name="sVersion" id="sVersion" class="layui-input", style="width:100%" required="required"/>
+    <br>
+    <legend>系统要求</legend>
+    <input type="text" name="sSysType" id="sSysType" class="layui-input", style="width:100%" required="required"/>
+    <div class="layui-input-block">
+    <button type="reset" class="layui-btn layui-btn-primary">重置</button>  
+    <input type="submit"  id="submit" value="提交"  class="layui-btn"> 
+    </div>
+</form>
 <fieldset class="layui-elem-field layui-field-title" style="margin-top: 20px;">
-  <legend>{{soft.sName}}</legend>
+  <legend>{{soft.sName}}&nbsp;  &nbsp;  &nbsp;  &nbsp; 
+      {% if role == 'admin'%}
+      <button class="layui-btn layui-btn-warm layui-btn-radius layui-btn-sm" id="edit">编辑</button>  
+      {% endif %}
+    </legend>
 </fieldset> 
 <div style="padding: 20px; background-color: #F2F2F2;">
   <div class="layui-row layui-col-space15">
@@ -37,70 +57,121 @@
   </div>
 </script>
 <script>
+  $(document).ready(function(){
+
     layui.use('table', function(){
-      var table = layui.table;
-      table.render({
-        elem: '#sTest'
-        ,url:'{{ url_for("lab_manage.check_labs") }}'
-        ,toolbar: '#toolbar' //开启头部工具栏，并为其绑定左侧模板
-        ,title: '实验室数据表'
-        ,skin: 'nob'
-        ,size: 'lg'
-        ,where:{
-            sId:"{{sId}}"
-          }
-        ,cols: [[
-          {type: 'checkbox', fixed: 'left'}
-          ,{field:'id', title:'实验室号', width:150, fixed: 'left', unresize: true, sort: true}
-          ,{field:'lName', title:'实验室名', width:120}
-          ,{field:'count', title:'实验室电脑数', width:120}
-          ,{field:'aId', title:'入库操作员', width:180}
-          //,{fixed: 'right', title:'操作', toolbar: '#bar', width:150}
-        ]]
-        ,page: true
-        ,limit: 7
-        ,response: {
-            statusCode: 0 //重新规定成功的状态码为 200，table 组件默认为 0
-          }
-        ,parseData: function(res){ //res 即为原始返回的数据
-            $('#lab_count').text(String(res.count))
-            return {
-              "code": res.code, //解析接口状态
-              "msg": res.msg, //解析提示文本
-              "count": res.count, //解析数据长度
-              "data": res.data //解析数据列表
-            };
-          }
+        var table = layui.table;
+        table.render({
+          elem: '#sTest'
+          ,url:'{{ url_for("lab_manage.check_labs") }}'
+          ,toolbar: '#toolbar' //开启头部工具栏，并为其绑定左侧模板
+          ,title: '实验室数据表'
+          ,skin: 'nob'
+          ,size: 'lg'
+          ,where:{
+              sId:"{{sId}}"
+            }
+          ,cols: [[
+            {type: 'checkbox', fixed: 'left'}
+            ,{field:'id', title:'实验室号', width:150, fixed: 'left', unresize: true, sort: true}
+            ,{field:'lName', title:'实验室名', width:120}
+            ,{field:'count', title:'实验室电脑数', width:120}
+            ,{field:'hcount', title:'已有电脑数', width:120}
+            ,{field:'aId', title:'入库操作员', width:180}
+            //,{fixed: 'right', title:'操作', toolbar: '#bar', width:150}
+          ]]
+          ,page: true
+          ,limit: 7
+          ,response: {
+              statusCode: 0 //重新规定成功的状态码为 200，table 组件默认为 0
+            }
+          ,parseData: function(res){ //res 即为原始返回的数据
+              $('#lab_count').text(String(res.count))
+              return {
+                "code": res.code, //解析接口状态
+                "msg": res.msg, //解析提示文本
+                "count": res.count, //解析数据长度
+                "data": res.data //解析数据列表
+              };
+            }
 
-      });
+        });
+    // 监听编辑框
+    $('#edit').on('click',function(){
+      layer.open({
+        type: 1,
+        shade: 0,
+         //点击遮罩关闭
+        area: ['400px', '300px'],
+        content: $("#form")
+        });
+    }); 
 
-      //头工具栏事件
-      table.on('toolbar(sTest)', function(obj){
-        var checkStatus = table.checkStatus(obj.config.id);
-        switch(obj.event){
-          case 'search':
-            layer.prompt({
-              formType: 2,
-              value: '',
-              title: '😀搜!' 
-            }, function(value, index, elem){
-              //alert(value); //得到value
-              table.reload('sTest', { //表格的id
-                where: {
-                    'info_search':value
-                }
+    $('#submit').on('click',function(){
+      var sName = $("#sName").val();
+      var sVersion = $("#sVersion").val();
+      var sSysType = $("#sSysType").val();
+
+      var pdata = {
+        sId:'{{sId}}',
+        sName:$('#sName').val(),
+        sVersion:$("#sVersion").val(),
+        sSysType:$("#sSysType").val()
+      }
+
+
+      $.ajax({
+        type:'post',
+        async:true,
+        url: '{{ url_for("soft_manage.soft_set") }}',
+        data:pdata,
+        success:function (result) {
+          window.location.reload();
+            layer.msg('修改成功'
+            ,{
+                time:1000
             });
-              layer.close(index);
-            });
 
-          break;
-          case 'reload':
-            table.reload('sTest');
-          break;
-                    //后面再加功能
-        };
+        },
+        error: function(){
+            layer.msg('修改失败'
+            ,{
+                time:1000
+            })}
+        
+    });
+        });
+
+        //头工具栏事件
+        table.on('toolbar(sTest)', function(obj){
+          var checkStatus = table.checkStatus(obj.config.id);
+          switch(obj.event){
+            case 'search':
+              layer.prompt({
+                formType: 2,
+                value: '',
+                title: '😀搜!' 
+              }, function(value, index, elem){
+                //alert(value); //得到value
+                table.reload('sTest', { //表格的id
+                  where: {
+                      'info_search':value
+                  }
+              });
+                layer.close(index);
+              });
+
+            break;
+            case 'reload':
+              table.reload('sTest');
+            break;
+                      //后面再加功能
+          };
+        });
+        
       });
       
-    });
-    </script>
+
+  })
+  </script>
 {% endblock %}
