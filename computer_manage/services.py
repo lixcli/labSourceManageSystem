@@ -88,7 +88,7 @@ def check_own_computer():
     # computers = db.session.execute(lab_computer_of(labId))
     if main_search is None:
         computers = db.session.query(Computer).filter_by(lId=labId).order_by('id').limit(limit).offset((page-1)*limit).all()
-        computer_len = db.session.query(Computer).filter_by(lId=labId).count()
+        computers_len = db.session.query(Computer).filter_by(lId=labId).count()
     elif main_search is not None:
         main_search = '%'.join(list(main_search))
         if len(main_search)>0:

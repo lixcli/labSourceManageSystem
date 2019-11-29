@@ -30,14 +30,15 @@
 </div>
 {% endblock %}
 {% block script %}
-<script type="text/html" id="toolbar">
-    <div class="layui-btn-container">
-      <button class="layui-btn layui-btn-sm" lay-event="getCheckData">删除选中行数据</button>
-  </div>
-</script>
 <script type="text/html" id="bar">
   <a class="layui-btn  layui-btn-xs" lay-event="info">详情</a>
 </script>            
+<script type="text/html" id="toolbar">
+  <div class="layui-btn-container">
+    <button class ="layui-btn layui-btn-primary layui-btn-sm" data-type ="reload" lay-event="search"><i class="layui-icon">&#xe615;</i></button>
+    <button class ="layui-btn layui-btn layui-btn-sm" data-type ="reload" lay-event="reload"><i class="layui-icon" >&#xe669;</i></button>
+  </div>
+</script>
 <script>
     layui.use('table', function(){
       var table = layui.table;
@@ -47,7 +48,7 @@
         ,url:'{{ url_for("soft_manage.check_softwares") }}'
         //,toolbar: '#toolbar' //开启头部工具栏，并为其绑定左侧模板
         ,title: '软件数据表'
-        
+        ,toolbar: '#toolbar' //开启头部工具栏，并为其绑定左侧模板
         ,cols: [[
           {field:'id', title:'软件id', width:150, fixed: 'left', unresize: true, sort: true}
           ,{field:'sName', title:'软件名', width:120}
@@ -73,6 +74,59 @@
 
       });
 
+      table.on('toolbar(sTest)', function(obj){
+        var checkStatus = table.checkStatus(obj.config.id);
+        switch(obj.event){
+          case 'search':
+            layer.prompt({
+              formType: 2,
+              value: '',
+              title: '😀搜!' 
+            }, function(value, index, elem){
+              //alert(value); //得到value
+              table.reload('sTest', { //表格的id
+                where: {
+                    'main_search':value
+                }
+            });
+              layer.close(index);
+            });
+
+          break;
+
+          case 'reload':
+            table.reload('sTest');
+          break;
+                    //后面再加功能
+        };
+      });
+
+      //头工具栏事件
+      table.on('toolbar(lTest)', function(obj){
+        var checkStatus = table.checkStatus(obj.config.id);
+        switch(obj.event){
+          case 'search':
+          layer.prompt({
+            formType: 2,
+            value: '',
+            title: '😀搜!' 
+          }, function(value, index, elem){
+            //alert(value); //得到value
+            table.reload('lTest', { //表格的id
+              where: {
+                  'main_search':value
+              }
+          });
+            layer.close(index);
+          });
+          break;
+          case 'reload':
+            table.reload('lTest');
+          break;
+                    //后面再加功能
+        };
+      });
+      
       //监听行工具事件
       table.on('tool(sTest)', function(obj){
         var data = obj.data;
@@ -95,7 +149,7 @@
       table.render({
         elem: '#lTest'
         ,url:'{{ url_for("lab_manage.check_labs") }}'
-        //,toolbar: '#toolbar' //开启头部工具栏，并为其绑定左侧模板
+        ,toolbar: '#toolbar' //开启头部工具栏，并为其绑定左侧模板
         ,title: '实验室数据表'
         
         ,cols: [[

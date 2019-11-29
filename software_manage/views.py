@@ -38,7 +38,7 @@ def newSoftware():
 
 @soft_manage.route('/soft_info/',methods=['GET','POST'])
 @login_required
-@admin_required
+# @admin_required
 def softInfo():
     sId = request.args.get('sId')
     form = newSoftwareForm()
