@@ -3,7 +3,6 @@ from . import *
 @login_required
 @admin_required
 def manage_user():
-    # TODO 用户管理界面操作
     form=NewUserForm()
     
     if form.validate_on_submit():

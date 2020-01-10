@@ -79,9 +79,11 @@ USE DB_laboratory
 -- WHERE id='c20191111/1' AND lId is NULL
 -- )
 
--- DELETE FROM Computer
--- WHERE id='c20191111/1'
--- SELECT * FROM ComputerSys
+
+
+DELETE FROM Laboratory
+WHERE id='301'
+
 
 
 -- SELECT * 
@@ -94,4 +96,4 @@ USE DB_laboratory
 --         )
 -- )
 
-SELECT * FROM Demand
+-- SELECT * FROM Demand

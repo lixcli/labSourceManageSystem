@@ -139,11 +139,6 @@ def soft_set():
     software.sysType = request.form.get('sSysType')
     software.sName = request.form.get('sName')
     software.version = request.form.get('sVersion')
-    # sId = request.args.get('sId')
-    # software = db.session.query(Software).filter_by(id=sId).first()
-    # software.sysType = request.args.get('sSysType')
-    # software.sName = request.args.get('sName')
-    # software.version = request.args.get('sVersion')
     try:
 
         db.session.commit()

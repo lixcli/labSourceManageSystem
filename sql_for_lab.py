@@ -30,6 +30,13 @@ ORDER BY id
 '''
 # 删除已有实验室
 delete_lab = lambda tgt: f'''
+UPDATE Computer 
+SET lId = NULL
+WHERE lId = {tgt}
+
+DELETE FROM Demand
+WHERE lId = {tgt}
+
 DELETE FROM Laboratory
 WHERE id = {tgt}
 '''
@@ -231,15 +238,12 @@ WHERE id='{id}'
 # 删除电脑
 delete_computer=lambda id: f'''
 DELETE FROM InstallList
-WHERE id in( 
+WHERE cid in( 
 SELECT id FROM Computer
 WHERE id='{id}' AND lId is NULL
 )
 DELETE FROM ComputerSys
-WHERE cId in( 
-SELECT id FROM Computer
-WHERE id='{id}'
-)
+WHERE cId = '{id}'
 
 DELETE FROM Computer
 WHERE id='{id}'

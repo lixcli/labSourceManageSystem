@@ -48,7 +48,7 @@ def deleteLab():
                 db.session.commit()
             except :
                 db.session.rollback()
-                flash(u'实验室信息添加失败:(')
+                flash(u'实验室信息修改失败:(')
                 
             finally:
                 return redirect(url_for('lab_manage.deleteLab'))
